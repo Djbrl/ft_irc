@@ -105,67 +105,6 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 	return *this;
 }
 
-// void IrcServer::run()
-// {
-//     fd_set readfds;
-//     int maxFd; // Store the highest file descriptor
-
-//     while (true)
-//     {
-//         FD_ZERO(&readfds);
-//         FD_SET(STDIN_FILENO, &readfds); // Add stdin (fd 0) to the set of file descriptors
-//         FD_SET(_serverFd, &readfds);    // Add the server socket to the set of file descriptors
-
-//         maxFd = std::max(STDIN_FILENO, _serverFd);
-
-//         // Add all connected client sockets to the set of file descriptors
-//         for (int clientSocket : g_clientSockets)
-//         {
-//             FD_SET(clientSocket, &readfds);
-//             maxFd = std::max(maxFd, clientSocket);
-//         }
-
-//         // Wait for activity on any of the file descriptors
-//         int activity = select(maxFd + 1, &readfds, nullptr, nullptr, nullptr);
-
-//         if (activity < 0)
-//         {
-//             // Handle error
-//             // You can add appropriate error handling here
-//         }
-//         else if (activity > 0)
-//         {
-//             // Check for activity on the server socket
-//             if (FD_ISSET(_serverFd, &readfds))
-//             {
-//                 int dataSocketFd = acceptClient();
-//                 g_clientSockets.push_back(dataSocketFd);
-//             }
-
-//             // Check for activity on client sockets
-//             for (auto it = g_clientSockets.begin(); it != g_clientSockets.end(); ++it)
-//             {
-//                 int clientSocket = *it;
-//                 if (FD_ISSET(clientSocket, &readfds))
-//                 {
-//                     std::istringstream requestField = readData(clientSocket);
-//                     displayClientInfo(clientSocket);
-//                     processCommand(requestField, clientSocket);
-//                 }
-//             }
-
-//             // Check for activity on stdin (terminal input)
-//             if (FD_ISSET(STDIN_FILENO, &readfds))
-//             {
-//                 std::string localCommand;
-//                 std::getline(std::cin, localCommand);
-// 				if (localCommand == "/exit")
-// 					exit(EXIT_SUCCESS);
-//             }
-//         }
-//     }
-// }
-
 //Server loop function :
 //-Accept connections
 //-Display information
