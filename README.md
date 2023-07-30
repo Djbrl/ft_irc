@@ -4,13 +4,6 @@
 
 FT_IRC is an IRC (Internet Relay Chat) **server implementation** that allows **users** to connect to the server using an IRC client and communicate with each other **using channels and direct messaging** in real-time, by using sockets.
 
-### How to run it
-
-- `make` will generate the executable. The Makefile handles *relink*, *header dependencies* and places objects in a */build* folder. 
-- The usage is `./ircserver <port> <password>`, but `password` authentication isn't implemented yet.
-- Once the server is running in a terminal, open another terminal and enter `nc <ipaddr> <port>`, followed by whatever you want to send requests to the server, command parsing isn't implemented yet. `irssi` will not be able to send requests to your ircserver until parsing is implemented, but you can still connect by using `/connect <ipaddr> <port>` inside the client. `ipaddr` will always be `localhost`, but `port` can be any free port.
-- To exit the server, you can hit `Ctrl + C` and the program will cleanly exit, however later on the only ways to exit the server will be sending a `SIGTERM` from another terminal or typing `/exit`.
-
 ---
 
 ### Read This First
@@ -25,6 +18,13 @@ FT_IRC is an IRC (Internet Relay Chat) **server implementation** that allows **u
 
 ---
 ## Project Overview
+
+### How to run it
+
+- `make` will generate the executable. The Makefile handles *relink*, *header dependencies* and places objects in a */build* folder. 
+- The usage is `./ircserver <port> <password>`, but `password` authentication isn't implemented yet.
+- Once the server is running in a terminal, open another terminal and enter `nc <ipaddr> <port>`, followed by whatever you want to send requests to the server, command parsing isn't implemented yet. `irssi` will not be able to send requests to your ircserver until parsing is implemented, but you can still connect by using `/connect <ipaddr> <port>` inside the client. `ipaddr` will always be `localhost`, but `port` can be any free port.
+- To exit the server, you can hit `Ctrl + C` and the program will cleanly exit, however later on the only ways to exit the server will be sending a `SIGTERM` from another terminal or typing `/exit`.
 
 For a detailed visualization of the FT_IRC server project, you can refer to the [Miro board](https://miro.com/app/board/uXjVMz5U6PI=/?share_link_id=179689716548).
 
