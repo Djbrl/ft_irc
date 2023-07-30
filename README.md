@@ -35,5 +35,7 @@ The `Channel` class represents an IRC channel, where users can join and exchange
 
 The `User` class represents an IRC user connected to the server. It stores user-specific information, such as nickname and connection status. Users can join channels, send and receive messages, and interact with other users on the server.
 
+## Branching & Implementation Strategy
 
+For this project I recommend settings weekly goal-oriented [sprints](https://github.com/Djbrl/ft_irc/commit/3e75b711564c96aa0ce4d978e64f5f13b42832e9) and working on feature-branches. Once a feature is implemented and fully tested and functional, it can be merged onto the main branch.
 
