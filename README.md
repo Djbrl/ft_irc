@@ -19,8 +19,7 @@ FT_IRC is an IRC (Internet Relay Chat) **server implementation** that allows **u
 ---
 ## Project Overview
 
-![Screenshot 1](https://imgur.com/a/PzxC530)
-
+![image](https://github.com/Djbrl/ft_irc/assets/29091732/f816c94e-5a23-47a8-9f35-95583164a733)
 
 ### IrcServer
 
@@ -38,6 +37,6 @@ The `User` class represents an IRC user connected to the server. It stores user-
 
 For a detailed visualization of the FT_IRC server project, you can refer to the [Miro board](https://miro.com/app/board/uXjVMz5U6PI=/?share_link_id=179689716548).
 
+![image](https://github.com/Djbrl/ft_irc/assets/29091732/f4badb7e-bd3d-4aba-a15f-4fe2b1cf438b)
 
-![Screenshot 2](https://imgur.com/a/zIbXcbz)
 
