@@ -44,7 +44,7 @@ IrcServer::IrcServer(const std::string &portNumber, const std::string& password)
 	{
 		//PARSING PORT
 		_serverPort = atoi(portNumber.c_str());
-		if ((_serverPort == 0 && portNumber != "0") || _serverPort < 0)
+		if ((_serverPort == 0 && portNumber != "0"))
 			throw InvalidPortException();
 		if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 			throw SocketCreationException();
@@ -52,7 +52,7 @@ IrcServer::IrcServer(const std::string &portNumber, const std::string& password)
 		_serverSockAddr.sin_family = AF_INET;
 		_serverSockAddr.sin_addr.s_addr = INADDR_ANY;
 		_serverSockAddr.sin_port = htons(_serverPort);
-		std::memset(_serverSockAddr.sin_zero, 0, sizeof(_serverSockAddr.sin_zero));
+		memset(_serverSockAddr.sin_zero, 0, sizeof(_serverSockAddr.sin_zero));
 		if (bind(_serverFd, (struct sockaddr *)&_serverSockAddr, sizeof(_serverSockAddr)) == -1)
 		{
 			close(_serverFd);
@@ -111,9 +111,9 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 //-Process the data
 void IrcServer::run()
 {
-	std::istringstream	requestField;
-	std::string			requestStatus;
-	int					dataSocketFd;
+	std::vector<std::string>	requestField;
+	std::string					requestStatus;
+	int							dataSocketFd;
 
 	while (true)
 	{

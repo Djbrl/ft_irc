@@ -2,7 +2,7 @@
 
 std::string Utils::getLocalTime()
 {
-	time_t		rawTime = std::time(nullptr);
+	time_t		rawTime = std::time(NULL);
 	struct tm	*timeInfo;
 	char		buffer[80];
 	

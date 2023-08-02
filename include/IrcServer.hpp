@@ -28,9 +28,9 @@ class IrcServer : public AServer
 
 	void								run();
 	int									acceptClient();
-	std::istringstream					readData(int clientSocket);
+	std::vector<std::string>			readData(int clientSocket);
 	void								displayClientData(int clientSocket);
-	void								processCommand(std::istringstream &requestField, int clientSocket);
+	void								processCommand(std::vector<std::string> &requestField, int clientSocket);
 										//authenticateClient
 										//createChannel
 											//Channel related methods...

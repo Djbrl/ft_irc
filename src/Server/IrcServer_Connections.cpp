@@ -26,62 +26,74 @@ int IrcServer::acceptClient()
 	return dataSocketFd;
 }
 
-//Read data from the clientSocket and return it as an object for processing, print an error message if the socket is closed or empty(ctrl+D)
-std::istringstream  IrcServer::readData(int clientSocket)
+std::vector<std::string> IrcServer::readData(int clientSocket)
 {
-	char    socketData[MAX_DATA_SIZE] = {0};
-	int     bytes = 0;
+	std::vector<std::string> request;
+	std::string word;
+	char socketData[MAX_DATA_SIZE] = {0};
+	int bytes = 0;
 
 	try
 	{
-		bytes = read(clientSocket, socketData, sizeof(socketData) - 1); 
+		bytes = read(clientSocket, socketData, sizeof(socketData) - 1);
 		if (bytes == 0)
 		{
 			std::cout << Utils::getLocalTime() << "Client disconnected." << std::endl;
-			g_clientSockets.erase(std::remove(g_clientSockets.begin(), g_clientSockets.end(), clientSocket), g_clientSockets.end());
+			std::vector<int>::iterator it = std::find(g_clientSockets.begin(), g_clientSockets.end(), clientSocket);
+			if (it != g_clientSockets.end())
+				g_clientSockets.erase(it);
 			close(clientSocket);
-			return std::istringstream("NULL");
+			return std::vector<std::string>(1, "NULL");
 		}
 		if (bytes < 0)
 		{
 			throw ReadSocketException();
-			return std::istringstream("NULL");
+			return std::vector<std::string>(1, "NULL");
 		}
 	}
-	catch(const ReadSocketException &e)
+	catch (const ReadSocketException &e)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	std::istringstream iss(socketData);
-	return iss;
+
+	// Copy the string into a sstream
+	std::stringstream iss(socketData);
+	while (iss >> word)
+	{
+		request.push_back(word);
+	}
+
+	// Return the request as a vector of string
+	return request;
 }
 
-//Display the data received from the current connected client
 void IrcServer::displayClientData(int clientSocket)
 {
-	char    socketData[MAX_DATA_SIZE] = {0};
-	char    clientIP[INET_ADDRSTRLEN];
-	int     bytes = 0;
+	char socketData[MAX_DATA_SIZE] = {0};
+	char clientIP[INET_ADDRSTRLEN];
+	int bytes = 0;
 
 	try
 	{
-		bytes = read(clientSocket, socketData, sizeof(socketData) - 1); 
+		bytes = read(clientSocket, socketData, sizeof(socketData) - 1);
 		if (bytes == 0)
 		{
 			std::cout << Utils::getLocalTime() << "Client disconnected." << std::endl;
-			g_clientSockets.erase(std::remove(g_clientSockets.begin(), g_clientSockets.end(), clientSocket), g_clientSockets.end());
+			std::vector<int>::iterator it = std::find(g_clientSockets.begin(), g_clientSockets.end(), clientSocket);
+			if (it != g_clientSockets.end())
+				g_clientSockets.erase(it);
 			close(clientSocket);
-			return ;
+			return;
 		}
 		if (bytes < 0)
 		{
 			throw ReadSocketException();
-			return ;
+			return;
 		}
 		inet_ntop(AF_INET, &(_serverSockAddr.sin_addr), clientIP, INET_ADDRSTRLEN);
 		std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;
 	}
-	catch(const ReadSocketException &e)
+	catch (const ReadSocketException &e)
 	{
 		std::cerr << e.what() << '\n';
 	}
@@ -89,13 +101,14 @@ void IrcServer::displayClientData(int clientSocket)
 
 //Process the data received from the current client
 //NOT IMPLEMETED YET
-void IrcServer::processCommand(std::istringstream &requestField, int clientSocket)
+void IrcServer::processCommand(std::vector<std::string> &requestField, int clientSocket)
 {
-	std::vector<std::string>    arguments;
-	std::string                 command;
+	std::string command;
 
 	(void)clientSocket;
-	requestField >> command;
+	command = requestField[0];
+	if (command == "NULL")
+		return ;
 	if (command == "NICK")
 	{
 		//do something

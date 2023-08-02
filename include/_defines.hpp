@@ -5,10 +5,12 @@
 
 # include <iostream>
 # include <sstream>
+# include <cstdlib>
 
-# include <string>
+# include <cstring>
 # include <vector>
 # include <map>
+# include <algorithm>
 
 # include <csignal>
 # include <ctime>

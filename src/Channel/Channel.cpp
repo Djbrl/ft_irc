@@ -36,8 +36,14 @@ void Channel::addMember(User& target) {
 	_membersList.push_back(target);
 }
 
+
 void Channel::removeMember(User& target) {
-	_membersList.erase(std::remove(_membersList.begin(), _membersList.end(), target), _membersList.end());
+    for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
+        if (*it == target) {
+            _membersList.erase(it);
+            break; // Exit the loop after erasing the element
+        }
+    }
 }
 
 void Channel::banMember(User& target) {
@@ -45,7 +51,12 @@ void Channel::banMember(User& target) {
 }
 
 void Channel::unbanMember(User& target) {
-	_banList.erase(std::remove(_banList.begin(), _banList.end(), target.getNickname()), _banList.end());
+    for (std::vector<std::string>::iterator it = _banList.begin(); it != _banList.end(); ++it) {
+        if (*it == target.getNickname()) {
+            _banList.erase(it);
+            break; // Exit the loop after erasing the element
+        }
+    }
 }
 
 void Channel::addMode(const std::string& mode) {
@@ -53,15 +64,24 @@ void Channel::addMode(const std::string& mode) {
 }
 
 void Channel::removeMode(const std::string& mode) {
-	_modesList.erase(std::remove(_modesList.begin(), _modesList.end(), mode), _modesList.end());
+    for (std::vector<std::string>::iterator it = _modesList.begin(); it != _modesList.end(); ++it) {
+        if (*it == mode) {
+            _modesList.erase(it);
+            break; // Exit the loop after erasing the element
+        }
+    }
 }
-
 void Channel::addOperator(User& target) {
 	_operatorsList.push_back(target);
 }
 
 void Channel::removeOperator(User& target) {
-	_operatorsList.erase(std::remove(_operatorsList.begin(), _operatorsList.end(), target), _operatorsList.end());
+    for (std::vector<User>::iterator it = _operatorsList.begin(); it != _operatorsList.end(); ++it) {
+        if (*it == target) {
+            _operatorsList.erase(it);
+            break; // Exit the loop after erasing the element
+        }
+    }
 }
 
 //GETTERS_____________________________________________________________________________________________________
