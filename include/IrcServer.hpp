@@ -23,7 +23,7 @@ class IrcServer : public AServer
 										IrcServer();
 	public:
 										~IrcServer();
-										IrcServer(const std::string& portNumber, const std::string& password);
+										IrcServer(const unsigned int& portNumber, const std::string& password);
 										IrcServer(const IrcServer &cpy);
 	IrcServer							&operator=(const IrcServer &cpy);
 	//METHODS__________________________________________________________________________________________________
@@ -32,8 +32,8 @@ class IrcServer : public AServer
 	int									acceptClient();
 	void								printSocketData(int clientSocket, char *socketData);
 	//camille
-	void    decorticate_message(int targeted_client, char *msg);
-	void    send_message(int sender_fd, char *msg);
+	void    decorticateMessage(int targeted_client, char *msg);
+	void    sendMessage(int sender_fd, char *msg);
 	void    clearFdFromList(int client_fd);
 	int new_client();
 	int handleRequest(int client_fd);

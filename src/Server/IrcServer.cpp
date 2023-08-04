@@ -34,7 +34,7 @@ IrcServer::IrcServer()
 {}
 
 //Mandatory constructor, protected with try-catches
-IrcServer::IrcServer(const std::string &portNumber, const std::string& password) : _serverPort(0),  _serverPassword(password), _serverFd(-1)
+IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverPort(portNumber),  _serverPassword(password), _serverFd(-1)
 {
 	//DEFINE SIGHANDLERS
 	std::signal(SIGINT, signalHandler);
@@ -42,12 +42,8 @@ IrcServer::IrcServer(const std::string &portNumber, const std::string& password)
 	std::signal(SIGTERM, signalHandler);
 	try
 	{
-		//PARSING PORT
-		_serverPort = atoi(portNumber.c_str());
-		if ((_serverPort == 0 && portNumber != "0") || _serverPort < 0)
-			throw InvalidPortException();
-		if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-			throw SocketCreationException();
+	if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		throw SocketCreationException();
 		//NAMING SOCKET
 		_serverSockAddr.sin_family = AF_INET;
 		_serverSockAddr.sin_addr.s_addr = INADDR_ANY;
@@ -98,32 +94,6 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 	return *this;
 }
 
-
-void    IrcServer::decorticate_message(int targeted_client, char *msg)
-{
-    int sent;
-	int already_sent = 0;
-	int msg_len = strlen(msg); //length of the message to be sent
-
-	while (already_sent < msg_len)
-    {
-		if ((sent = send(targeted_client, msg + already_sent, msg_len - already_sent, MSG_DONTWAIT)) <= 0)
-			return ;
-		already_sent += sent;
-	}  
-}
-
-//sending the message to every client that is not the sender !
-void    IrcServer::send_message(int sender_fd, char *msg)
-{
-    for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-    {
-        if (g_clientSockets[i] != sender_fd)  
-            decorticate_message(g_clientSockets[i], msg);
-    }
-
-}
-
 void    IrcServer::clearFdFromList(int clientFd)
 {
     int j = 0;
@@ -149,7 +119,7 @@ int IrcServer::handleRequest(int clientFd)
 	{
         clearFdFromList(clientFd);
 		// SEND BACK NUMERIC REPLY TO CLIENT 		//
-		/* send_message(new_sockfd, welcome_msg);	*/
+		/* sendMessage(new_sockfd, welcome_msg);	*/
 		// SEND BACK NUMERIC REPLY TO CLIENT 		//
 		return (-1);
     }
@@ -158,13 +128,13 @@ int IrcServer::handleRequest(int clientFd)
 		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
         clearFdFromList(clientFd);
 		// SEND BACK NUMERIC REPLY TO CLIENT 		//
-		/* send_message(new_sockfd, welcome_msg);	*/
+		/* sendMessage(new_sockfd, welcome_msg);	*/
 		// SEND BACK NUMERIC REPLY TO CLIENT 		//
         return (0);
     }
 	printSocketData(clientFd, buffer);
 	// SEND BACK NUMERIC REPLY TO CLIENT 		//
-	/* send_message(clientFd, welcome_msg);		*/
+	/* sendMessage(clientFd, welcome_msg);		*/
 	// SEND BACK NUMERIC REPLY TO CLIENT 		//
 	return (0);
 }

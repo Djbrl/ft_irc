@@ -1,5 +1,29 @@
 #include "IrcServer.hpp"
 
+void    IrcServer::decorticateMessage(int targeted_client, char *msg)
+{
+    int sent;
+	int already_sent = 0;
+	int msg_len = strlen(msg); //length of the message to be sent
+
+	while (already_sent < msg_len)
+    {
+		if ((sent = send(targeted_client, msg + already_sent, msg_len - already_sent, MSG_DONTWAIT)) <= 0)
+			return ;
+		already_sent += sent;
+	}  
+}
+
+//sending the message to every client that is not the sender !
+void    IrcServer::sendMessage(int sender_fd, char *msg)
+{
+    for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+    {
+        if (g_clientSockets[i] != sender_fd)  
+            decorticateMessage(g_clientSockets[i], msg);
+    }
+
+}
 //Accept connections from clients on the serverFd and print a message with the clientFD and the IP
 int IrcServer::acceptClient()
 {
@@ -35,4 +59,5 @@ void IrcServer::printSocketData(int clientSocket, char *socketData)
 
 	inet_ntop(AF_INET, &(_serverSockAddr.sin_addr), clientIP, INET_ADDRSTRLEN);
 	std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;
+	return ;
 }
