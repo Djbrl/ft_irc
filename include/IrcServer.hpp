@@ -18,19 +18,25 @@ class IrcServer : public AServer
 	int									_serverFd;
 	std::map<std::string, User>			_ConnectedUsers;
 	std::map<std::string, Channel>		_Channels;
+	fd_set								_clientsFdSet;
+
 										IrcServer();
 	public:
 										~IrcServer();
-										IrcServer(const std::string& portNumber, const std::string& password);
+										IrcServer(const unsigned int& portNumber, const std::string& password);
 										IrcServer(const IrcServer &cpy);
 	IrcServer							&operator=(const IrcServer &cpy);
 	//METHODS__________________________________________________________________________________________________
 
 	void								run();
 	int									acceptClient();
-	std::vector<std::string>			readData(int clientSocket);
-	void								displayClientData(int clientSocket);
-	void								processCommand(std::vector<std::string> &requestField, int clientSocket);
+	void								printSocketData(int clientSocket, char *socketData);
+	//camille
+	void    decorticateMessage(int targeted_client, char *msg);
+	void    sendMessage(int sender_fd, char *msg);
+	void    clearFdFromList(int client_fd);
+	int new_client();
+	int handleRequest(int client_fd);
 										//authenticateClient
 										//createChannel
 											//Channel related methods...

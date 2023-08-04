@@ -42,11 +42,11 @@
 
 //DEFINES____________________________________________________________________________________________________________
 
-# define IPADDR         "127.0.0.1"
-# define PORT           8080
-# define QUEUE_BACKLOG  10
-# define MAX_EVENTS     10
-# define MAX_DATA_SIZE  4096
+# define IPADDR                 "127.0.0.1"
+# define PORT                   6667
+# define MAX_EVENTS             10
+# define MAX_DATA_SIZE          4096
+# define MESSAGE_BUFFER_SIZE    1024
 
 //GLOBAL_____________________________________________________________________________________________________________
 
