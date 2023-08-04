@@ -59,23 +59,16 @@ IrcServer::IrcServer(const std::string &portNumber, const std::string& password)
 			throw BindException();
 		}
 		//LISTEN PORT WITH BACKLOG ENABLED
-		if (listen(_serverFd, QUEUE_BACKLOG) == -1)
+		if (listen(_serverFd, SOMAXCONN) == -1)
 			throw ListenException();
 		//ADDED SERVERFD TO FD LIST FOR CLEANUP
 		g_clientSockets.push_back(_serverFd);
-	} catch (const InvalidPortException& err) {
-		std::cerr << err.what() << std::endl;
-		exit(EXIT_FAILURE);
-	} catch (const SocketCreationException& err) {
-		std::cerr << err.what() << std::endl;
-		exit(EXIT_FAILURE);
-	} catch (const BindException& err) {
-		std::cerr << err.what() << std::endl;
-		exit(EXIT_FAILURE);
-	} catch (const ListenException& err) {
-		std::cerr << err.what() << std::endl;
-		exit(EXIT_FAILURE);
 	}
+	catch (const IrcServerException& err)
+    {
+        std::cerr << err.what() << std::endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 IrcServer::~IrcServer()
@@ -105,82 +98,110 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 	return *this;
 }
 
-// void IrcServer::run()
-// {
-//     fd_set readfds;
-//     int maxFd; // Store the highest file descriptor
 
-//     while (true)
-//     {
-//         FD_ZERO(&readfds);
-//         FD_SET(STDIN_FILENO, &readfds); // Add stdin (fd 0) to the set of file descriptors
-//         FD_SET(_serverFd, &readfds);    // Add the server socket to the set of file descriptors
+void    IrcServer::decorticate_message(int targeted_client, char *msg)
+{
+    int sent;
+	int already_sent = 0;
+	int msg_len = strlen(msg); //length of the message to be sent
 
-//         maxFd = std::max(STDIN_FILENO, _serverFd);
+	while (already_sent < msg_len)
+    {
+		if ((sent = send(targeted_client, msg + already_sent, msg_len - already_sent, MSG_DONTWAIT)) <= 0)
+			return ;
+		already_sent += sent;
+	}  
+}
 
-//         // Add all connected client sockets to the set of file descriptors
-//         for (int clientSocket : g_clientSockets)
-//         {
-//             FD_SET(clientSocket, &readfds);
-//             maxFd = std::max(maxFd, clientSocket);
-//         }
+//sending the message to every client that is not the sender !
+void    IrcServer::send_message(int sender_fd, char *msg)
+{
+    for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+    {
+        if (g_clientSockets[i] != sender_fd)  
+            decorticate_message(g_clientSockets[i], msg);
+    }
 
-//         // Wait for activity on any of the file descriptors
-//         int activity = select(maxFd + 1, &readfds, nullptr, nullptr, nullptr);
+}
 
-//         if (activity < 0)
-//         {
-//             // Handle error
-//             // You can add appropriate error handling here
-//         }
-//         else if (activity > 0)
-//         {
-//             // Check for activity on the server socket
-//             if (FD_ISSET(_serverFd, &readfds))
-//             {
-//                 int dataSocketFd = acceptClient();
-//                 g_clientSockets.push_back(dataSocketFd);
-//             }
+void    IrcServer::clearFdFromList(int clientFd)
+{
+    int j = 0;
+    for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+    {
+        if (clientFd == g_clientSockets[i])
+		{
+			FD_CLR(clientFd, &_clientsFdSet);
+            g_clientSockets.erase(g_clientSockets.begin()+j);
+			close(clientFd);
+		}
+		j++;
+    }
+}
 
-//             // Check for activity on client sockets
-//             for (auto it = g_clientSockets.begin(); it != g_clientSockets.end(); ++it)
-//             {
-//                 int clientSocket = *it;
-//                 if (FD_ISSET(clientSocket, &readfds))
-//                 {
-//                     std::istringstream requestField = readData(clientSocket);
-//                     displayClientInfo(clientSocket);
-//                     processCommand(requestField, clientSocket);
-//                 }
-//             }
+int IrcServer::handleRequest(int clientFd)
+{
+    char    buffer[MESSAGE_BUFFER_SIZE] = {0};
+    int     bytes_received;
 
-//             // Check for activity on stdin (terminal input)
-//             if (FD_ISSET(STDIN_FILENO, &readfds))
-//             {
-//                 std::string localCommand;
-//                 std::getline(std::cin, localCommand);
-// 				if (localCommand == "/exit")
-// 					exit(EXIT_SUCCESS);
-//             }
-//         }
-//     }
-// }
+	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
+    if (bytes_received == -1) 
+	{
+        clearFdFromList(clientFd);
+		// SEND BACK NUMERIC REPLY TO CLIENT 		//
+		/* send_message(new_sockfd, welcome_msg);	*/
+		// SEND BACK NUMERIC REPLY TO CLIENT 		//
+		return (-1);
+    }
+    if (bytes_received == 0)
+    {
+		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
+        clearFdFromList(clientFd);
+		// SEND BACK NUMERIC REPLY TO CLIENT 		//
+		/* send_message(new_sockfd, welcome_msg);	*/
+		// SEND BACK NUMERIC REPLY TO CLIENT 		//
+        return (0);
+    }
+	printSocketData(clientFd, buffer);
+	// SEND BACK NUMERIC REPLY TO CLIENT 		//
+	/* send_message(clientFd, welcome_msg);		*/
+	// SEND BACK NUMERIC REPLY TO CLIENT 		//
+	return (0);
+}
 
-//Server loop function :
-//-Accept connections
-//-Display information
-//-Process the data
 void IrcServer::run()
 {
 	std::istringstream	requestField;
 	std::string			requestStatus;
-	int					dataSocketFd;
 
+	FD_ZERO(&_clientsFdSet);
+    FD_SET(_serverFd, &_clientsFdSet);
 	while (true)
 	{
-		dataSocketFd = acceptClient();
-		requestField = readData(dataSocketFd);
-		displayClientData(dataSocketFd);
-		processCommand(requestField, dataSocketFd);
+		fd_set	tmpSet = _clientsFdSet;
+		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1)
+        {
+            std::cerr << "Error : Problem with file descriptor set." << std::endl;
+        }
+        if (FD_ISSET(_serverFd, &tmpSet))
+        {
+            if (acceptClient() == -1)
+            {
+	        	std::cerr << "Error : Couldn't accept client." << std::endl;
+			}
+        }
+        else
+        {
+            for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+            {
+                if (FD_ISSET(g_clientSockets[i], &tmpSet))
+                {    
+                    if (handleRequest(g_clientSockets[i]) == -1)
+                    {
+		          		std::cerr << "Error : Couldn't handle request." << std::endl;
+					}
+                }
+            }
+        }
 	}
 }

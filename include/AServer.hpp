@@ -1,62 +1,92 @@
 #ifndef __ASERVER_HPP__
-# define __ASERVER_HPP__
+#define __ASERVER_HPP__
 
-# include "_defines.hpp"
+#include "_defines.hpp"
 
-//ASERVER CLASS____________________________________________________________________________________________________
-//AServer is a pure abstract class that carries all the exceptions needed for our IRC Server
+// ASERVER CLASS
+// AServer is a pure abstract class that carries all the exceptions needed for our IRC Server
+
+class IrcServerException : public std::exception
+{
+	public:
+		IrcServerException();
+		virtual ~IrcServerException();
+		virtual const char* what() const throw()
+		{
+			return "IrcServerException: An unknown error occurred.";
+		}
+};
 
 class AServer
 {
-    public:
-                                    AServer();
-                                    virtual ~AServer();
-        virtual void				run() = 0;
+public:
+	AServer();
+	virtual ~AServer();
+	virtual void run() = 0;
 
-        //EXCEPTIONS_______________________________________________________________________________________________
-        
-        class InvalidPortException : public std::exception {
-        public:
-            virtual const char* what() const throw() {
-                return "IrcServer: Exception: Invalid or occupied port number provided.";
-            }
-        };
+	// EXCEPTIONS
+	class InvalidPortException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "InvalidPortException: Invalid or occupied port number provided.";
+			}
+	};
 
-        class SocketCreationException : public std::exception {
-        public:
-            virtual const char* what() const throw() {
-                return "IrcServer: Exception: Socket creation failed.";
-            }
-        };
+	class SocketCreationException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "SocketCreationException: Socket creation failed.";
+			}
+	};
 
-        class BindException : public std::exception {
-        public:
-            virtual const char* what() const throw() {
-                return "IrcServer: Exception: Bind() failed.";
-            }
-        };
+	class BindException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "BindException: Bind() failed.";
+			}
+	};
 
-        class ListenException : public std::exception {
-        public:
-            virtual const char* what() const throw() {
-                return "IrcServer: Exception: Listen() failed.";
-            }
-        };
+	class ListenException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "ListenException: Listen() failed.";
+			}
+	};
 
-        class AcceptException : public std::exception {
-        public:
-            virtual const char* what() const throw() {
-                return "IrcServer: Exception: Accept() failed.";
-            }
-        };
+	class AcceptException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "AcceptException: Accept() failed.";
+			}
+	};
 
-        class ReadSocketException : public std::exception {
-        public:
-            virtual const char* what() const throw() {
-                return "IrcServer: Exception: Failed to read client socket.";
-            }
-        };
+	class ReadSocketException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "ReadSocketException: Failed to read client socket.";
+			}
+	};
 
+	class SelectHandlerException : public IrcServerException
+	{
+		public:
+			virtual const char* what() const throw()
+			{
+				return "SelectHandlerException: Failed to handle socket in select().";
+			}
+	};
 };
 
 #endif

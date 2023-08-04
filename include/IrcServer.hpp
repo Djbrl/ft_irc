@@ -18,6 +18,8 @@ class IrcServer : public AServer
 	int									_serverFd;
 	std::map<std::string, User>			_ConnectedUsers;
 	std::map<std::string, Channel>		_Channels;
+	fd_set								_clientsFdSet;
+
 										IrcServer();
 	public:
 										~IrcServer();
@@ -28,9 +30,15 @@ class IrcServer : public AServer
 
 	void								run();
 	int									acceptClient();
-	std::istringstream					readData(int clientSocket);
-	void								displayClientData(int clientSocket);
-	void								processCommand(std::istringstream &requestField, int clientSocket);
+	void								printSocketData(int clientSocket, char *socketData);
+	//camille
+	void    decorticate_message(int targeted_client, char *msg);
+	void    send_message(int sender_fd, char *msg);
+	void    clearFdFromList(int client_fd);
+	int new_client();
+	int handleRequest(int client_fd);
+
+
 										//authenticateClient
 										//createChannel
 											//Channel related methods...
