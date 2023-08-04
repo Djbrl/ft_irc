@@ -5,16 +5,15 @@
 
 // ASERVER CLASS
 // AServer is a pure abstract class that carries all the exceptions needed for our IRC Server
-
 class IrcServerException : public std::exception
 {
-	public:
-		IrcServerException();
-		virtual ~IrcServerException();
-		virtual const char* what() const throw()
-		{
-			return "IrcServerException: An unknown error occurred.";
-		}
+public:
+	IrcServerException();
+	virtual ~IrcServerException() throw();
+	virtual const char* what() const throw()
+	{
+		return "IrcServerException: An unknown error occurred.";
+	}
 };
 
 class AServer

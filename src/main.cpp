@@ -10,7 +10,7 @@ int main(int ac, char **av)
 		std::cout << "Usage : ./ircserver <port> <password>" << std::endl;
 		return 1;
 	}
-	if ((serverPort == 0 && av[2] != "0") || serverPort < 0 || serverPassword.empty())
+	if ((serverPort == 0 && av[2] != std::string("0")) || serverPort < 0 || serverPassword.empty())
 	{
 		std::cout << "Error: Invalid port or empty password." << std::endl;
 		return 1;

@@ -3,7 +3,7 @@
 IrcServerException::IrcServerException()
 {}
 
-IrcServerException::~IrcServerException()
+IrcServerException::~IrcServerException() throw()
 {}
 
 AServer::AServer()
