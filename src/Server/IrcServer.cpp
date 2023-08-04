@@ -48,7 +48,7 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 		_serverSockAddr.sin_family = AF_INET;
 		_serverSockAddr.sin_addr.s_addr = INADDR_ANY;
 		_serverSockAddr.sin_port = htons(_serverPort);
-		std::memset(_serverSockAddr.sin_zero, 0, sizeof(_serverSockAddr.sin_zero));
+		memset(_serverSockAddr.sin_zero, 0, sizeof(_serverSockAddr.sin_zero));
 		if (bind(_serverFd, (struct sockaddr *)&_serverSockAddr, sizeof(_serverSockAddr)) == -1)
 		{
 			close(_serverFd);
@@ -143,6 +143,7 @@ void IrcServer::run()
 {
 	std::istringstream	requestField;
 	std::string			requestStatus;
+
 
 	FD_ZERO(&_clientsFdSet);
     FD_SET(_serverFd, &_clientsFdSet);

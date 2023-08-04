@@ -60,4 +60,5 @@ void IrcServer::printSocketData(int clientSocket, char *socketData)
 	inet_ntop(AF_INET, &(_serverSockAddr.sin_addr), clientIP, INET_ADDRSTRLEN);
 	std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;
 	return ;
+
 }

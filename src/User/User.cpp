@@ -10,8 +10,8 @@ User::User(const std::string &name)
 {
 	_nickname = name;
 	_username = "";
-	_registrationDate = time(nullptr);
-	_lastActiveTime = time(nullptr);
+	_registrationDate = time(NULL);
+	_lastActiveTime = time(NULL);
 	_isConnected = false;
 	_isOperator = false;
 }
@@ -20,8 +20,8 @@ User::User(const std::string &name, const std::string &uname)
 {
 	_nickname = name;
 	_username = uname;
-	_registrationDate = time(nullptr);
-	_lastActiveTime = time(nullptr);
+	_registrationDate = time(NULL);
+	_lastActiveTime = time(NULL);
 	_isConnected = false;
 	_isOperator = false;
 }
@@ -69,14 +69,22 @@ void User::addMessageToQueue(const std::string& message)
 
 void User::removeMessageFromQueue(const std::string& message)
 {
-	if (_messageQueue.empty())
-		return ;
-	std::vector<std::string>::iterator it = std::find(_messageQueue.begin(), _messageQueue.end(), message);
-	if (it == _messageQueue.end())
-		return;
-	_messageQueue.erase(std::remove(_messageQueue.begin(), _messageQueue.end(), message), _messageQueue.end());
-}
+    if (_messageQueue.empty())
+        return;
 
+    std::vector<std::string>::iterator it = _messageQueue.begin();
+    while (it != _messageQueue.end())
+    {
+        if (*it == message)
+        {
+            it = _messageQueue.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
 
 //GETTERS______________________________________________________________________________________________________
 
