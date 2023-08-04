@@ -5,6 +5,7 @@
 # include "AServer.hpp"
 # include "Channel.hpp"
 # include "User.hpp"
+# include "UserMap.hpp"
 
 //IRCSERVER CLASS____________________________________________________________________________________________________
 //IrcServer inherits from AServer, and carries all the methods and attributes needed for our IRC Server 
@@ -16,7 +17,7 @@ class IrcServer : public AServer
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
 	int									_serverFd;
-	std::map<std::string, User>			_ConnectedUsers;
+	UserMap								_ConnectedUsers;
 	std::map<std::string, Channel>		_Channels;
 										IrcServer();
 	public:
