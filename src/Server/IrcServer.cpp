@@ -43,7 +43,9 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 	try
 	{
 	if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	{
 		throw SocketCreationException();
+	}
 		//NAMING SOCKET
 		_serverSockAddr.sin_family = AF_INET;
 		_serverSockAddr.sin_addr.s_addr = INADDR_ANY;
