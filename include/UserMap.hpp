@@ -7,8 +7,8 @@
 class UserMap
 {
 private:
-    std::map<int, std::string> socket_to_nickname;
-    std::map<std::string, User> nickname_to_user;
+    std::map<std::string, int> nickname_to_socket;
+    std::map<int, User> socket_to_user;
 public:
     std::string &getNicknameFromSocket(int socket);
     void addUser(int socket, std::string &nickname);
@@ -16,10 +16,21 @@ public:
     User& operator[](int socket);
     User& operator[](std::string nickname);
     
-    void addUser();
-    
+    User *addUser(int socket); //Return the created User
+    User *getUser(int socket);
+    User *getUser(std::string &nickname);
+    bool removeUser(int socket);
+
     UserMap();
     ~UserMap();
+
+    class NicknameRegisteredToEmptySocket : public std::exception
+    {
+		public:
+			virtual const char* what() const throw(){
+				return "IrcServer: UserMap: Nickname is registered to a socket but socket isn't registered to a User.";
+			}
+    };
 };
 
 #endif

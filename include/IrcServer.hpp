@@ -38,6 +38,9 @@ class IrcServer : public AServer
 										//loginUser
 											//User related methods...
 	//GETTERS__________________________________________________________________________________________________
+	User								*getUser(int socket_fd);
+	User								*getUser(std::string &nickname);
+
 	//SETTERS__________________________________________________________________________________________________
 };
 
