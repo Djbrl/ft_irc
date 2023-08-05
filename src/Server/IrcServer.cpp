@@ -130,6 +130,26 @@ void IrcServer::handleRequest(int clientFd)
 		return;
 	}
 	printSocketData(clientFd, buffer);
+	std::stringstream request(buffer);
+	std::string command;
+	std::string argument;
+
+	request >> command;
+	request >> argument;
+	
+	if (command == "PASS")
+	{
+		if (argument == _serverPassword)
+		{
+			std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+		}
+		else
+		{
+			std::string message = "Wrong password.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+		}
+	}
 	return;
 }
 
