@@ -4,7 +4,7 @@ int main(int ac, char **av)
 {
 	if (ac != 3)
 	{
-		std::cout << "Usage : ./ircserver <port> <password>" << std::endl;
+		std::cout << "Usage : ./ircserver" << BWHITE << " <port> <password>\n" << RESET << std::endl;
 		return 1;
 	}
 
