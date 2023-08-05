@@ -54,6 +54,53 @@ int IrcServer::acceptClient()
     return dataSocketFd;
 }
 
+void	IrcServer::parseQuery(std::string clientQuery) {
+
+    // std::size_t queryLen = clientQuery.size(); //check that it is not over 512
+    std::size_t start = 0;
+    std::size_t end, found;
+    std::string subQuery;
+
+    //check basics
+
+    // if (_queryLen > 512)
+        //throw something 
+
+    
+
+    //ignore spaces
+    while (clientQuery[start] == ' ')
+        start++;
+
+    found = clientQuery.find("\r\n");
+    
+    while(found != std::string::npos)
+    {
+        end = found;
+        //ignore spaces
+        if (clientQuery[found - 1] == ' ')
+        {
+            end = found;
+            while (clientQuery[end - 1] == ' ')
+                end--;
+        }
+        //extract each command until the next "\r\n"
+        subQuery = clientQuery.substr(start, end - start);
+        std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
+        
+        //implement the parsing logic for each command individually
+        
+        //update _start to analyze the rest of the query
+        start = found + 2;
+        //ignore spaces
+        while(clientQuery[start] == ' ')
+            start++;
+        //find the next "\r\n" occurrence
+        found = clientQuery.find("\r\n", start);
+    }
+
+}
+
 //Display the data received from the current connected client
 void IrcServer::printSocketData(int clientSocket, char* socketData)
 {
@@ -61,5 +108,7 @@ void IrcServer::printSocketData(int clientSocket, char* socketData)
 
 	clientIP = inet_ntoa(_serverSockAddr.sin_addr);
     std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;
+    // std::cout << "Socket is " << clientSocket << std::endl;
+    // parseQuery(socketData);
     return;
 }

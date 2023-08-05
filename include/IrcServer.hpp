@@ -35,8 +35,9 @@ class IrcServer : public AServer
 	void    decorticateMessage(int targeted_client, char *msg);
 	void    sendMessage(int sender_fd, char *msg);
 	void    clearFdFromList(int client_fd);
-	int new_client();
-	int handleRequest(int client_fd);
+	void	parseQuery(std::string clientQuery);
+	int 	new_client();
+	int 	handleRequest(int client_fd);
 										//authenticateClient
 										//createChannel
 											//Channel related methods...
