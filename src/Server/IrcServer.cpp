@@ -130,17 +130,26 @@ void IrcServer::handleRequest(int clientFd)
 		return;
 	}
 	printSocketData(clientFd, buffer);
+	
+	//AUTHENTICATION PROTOTYPE
+	//split request assuming this is ONE message (terminated by CRLF)
+	//by rfc1459 there can only one command per message, but multiple messages per request
 	std::stringstream request(buffer);
 	std::string command;
 	std::string argument;
 
 	request >> command;
 	request >> argument;
-	
+	//check command and argument
+		//to add :
+		//- if the user is already connected, reject PASS request
+		//- figure out what rfc1459 means by only taking the last pass in terms of parsing
 	if (command == "PASS")
 	{
 		if (argument == _serverPassword)
 		{
+			//delete user from lobby to connected users
+			//set user authenticated status to true
 			std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
 			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 		}
@@ -150,6 +159,9 @@ void IrcServer::handleRequest(int clientFd)
 			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 		}
 	}
+	//if command == anything while user has authenticated status, reject and remind to authenticate
+	//if command == NICK
+		// if user has a non-empty NICK update it, otherwise set nickname to a non-empty NICK, but reject if NICK is already taken, even by same user
 	return;
 }
 

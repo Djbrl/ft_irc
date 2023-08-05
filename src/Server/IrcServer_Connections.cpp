@@ -28,7 +28,7 @@ void IrcServer::sendServerResponse(int clientFd, char *message)
 {
 	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 	{
-		if (g_clientSockets[i] != clientFd)
+		if (g_clientSockets[i] == clientFd)
 			_serverResponses[g_clientSockets[i]] = message;
 	}
 }
@@ -50,6 +50,8 @@ int IrcServer::acceptClient()
 		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
 		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
 		sendWelcomeMessage(dataSocketFd);
+		//CREATE A USER AND PUT IT IN LOBBYMAP UNTIL HE GIVES PASS AND NICK
+		//do that here
 	} catch (const AcceptException& e) {
 		std::cerr << e.what() << '\n';
 	}

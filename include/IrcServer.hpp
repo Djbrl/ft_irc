@@ -12,15 +12,14 @@
 class IrcServer : public AServer
 {
 	private:
-	sockaddr_in_t						_serverSockAddr;
+	int									_serverFd;
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
-	int									_serverFd;
-	std::map<std::string, User>			_ConnectedUsers;
+	sockaddr_in_t						_serverSockAddr;
 	std::map<std::string, Channel>		_Channels;
-	fd_set								_clientsFdSet;
+	std::map<std::string, User>			_ConnectedUsers;
 	std::map<int, std::string>			_serverResponses;
-	std::vector<int>					clientsWithWelcomeMessage;
+	fd_set								_clientsFdSet;
 										IrcServer();
 	public:
 										~IrcServer();
