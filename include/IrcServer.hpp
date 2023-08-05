@@ -36,6 +36,7 @@ class IrcServer : public AServer
 	void    sendMessage(int sender_fd, char *msg);
 	void    clearFdFromList(int client_fd);
 	void	parseQuery(std::string clientQuery);
+	void	commandDispatch(std::string clientQuery);
 	int 	new_client();
 	int 	handleRequest(int client_fd);
 										//authenticateClient

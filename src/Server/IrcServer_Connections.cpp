@@ -54,49 +54,62 @@ int IrcServer::acceptClient()
     return dataSocketFd;
 }
 
+// void    Irc::Server::commandDispatch(int clientSocket, std::string clientQuery) {
+
+
+
+// }
+
 void	IrcServer::parseQuery(std::string clientQuery) {
 
-    // std::size_t queryLen = clientQuery.size(); //check that it is not over 512
+    std::size_t queryLen = clientQuery.size();
     std::size_t start = 0;
     std::size_t end, found;
     std::string subQuery;
 
-    //check basics
-
-    // if (_queryLen > 512)
-        //throw something 
-
-    
-
-    //ignore spaces
-    while (clientQuery[start] == ' ')
-        start++;
-
-    found = clientQuery.find("\r\n");
-    
-    while(found != std::string::npos)
+    try 
     {
-        end = found;
+        //check basics
+        if (queryLen > 512)
+            throw QueryParsingException();
+        if (clientQuery.find_last_of("\r\n") != queryLen - 1)
+            throw QueryParsingException();
+
         //ignore spaces
-        if (clientQuery[found - 1] == ' ')
+        while (clientQuery[start] == ' ')
+            start++;
+        
+        found = clientQuery.find("\r\n");
+    
+        while(found != std::string::npos)
         {
             end = found;
-            while (clientQuery[end - 1] == ' ')
-                end--;
+            //ignore spaces
+            if (clientQuery[found - 1] == ' ')
+            {
+                end = found;
+                while (clientQuery[end - 1] == ' ')
+                        end--;
+            }
+            //extract each command until the next "\r\n"
+            subQuery = clientQuery.substr(start, end - start);
+            std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
+
+            //implement the parsing logic for each command individually but dispatch them first
+            // commandDispatch(clientSocket, subQuery);
+
+            //update start to analyze the rest of the query
+            start = found + 2;
+            //ignore spaces
+            while(clientQuery[start] == ' ')
+                start++;
+            //find the next "\r\n" occurrence
+            found = clientQuery.find("\r\n", start);
         }
-        //extract each command until the next "\r\n"
-        subQuery = clientQuery.substr(start, end - start);
-        std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
-        
-        //implement the parsing logic for each command individually
-        
-        //update _start to analyze the rest of the query
-        start = found + 2;
-        //ignore spaces
-        while(clientQuery[start] == ' ')
-            start++;
-        //find the next "\r\n" occurrence
-        found = clientQuery.find("\r\n", start);
+    }
+    catch (const QueryParsingException &e)
+    {
+        std::cerr << e.what() << '\n';
     }
 
 }
@@ -107,8 +120,8 @@ void IrcServer::printSocketData(int clientSocket, char* socketData)
     std::string	clientIP;
 
 	clientIP = inet_ntoa(_serverSockAddr.sin_addr);
-    std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;
-    // std::cout << "Socket is " << clientSocket << std::endl;
-    // parseQuery(socketData);
+    // std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;
+    std::cout << "Socket is " << clientSocket << std::endl;
+    parseQuery(socketData);
     return;
 }
