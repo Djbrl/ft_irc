@@ -48,7 +48,6 @@ $(BUILD_PATH)%.o: %.cpp $(HEADERS)
 # RELINK guard : checks if NAME exists with objects as dep.
 $(NAME): $(OBJS)
 	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
-	@echo "Ready : ${GREEN}`pwd`/${NAME}${RESET}"
 
 #stty -echoctl : disable echo for control characters like 'ˆC' on Ctrl+C
 all: $(NAME) client

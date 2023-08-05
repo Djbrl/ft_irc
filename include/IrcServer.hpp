@@ -34,7 +34,7 @@ class IrcServer : public AServer
 	void								handleClientWrite(int clientSocket);
 	void								sendWelcomeMessage(int clientSocket);
 	void   								safeSendMessage(int targeted_client, char *msg);
-	void   								sendMessage(int sender_fd, char *msg);
+	void   								sendServerResponse(int sender_fd, char *msg);
 	void    							clearFdFromList(int client_fd);
 	void								handleRequest(int clientFd);
 										//authenticateClient

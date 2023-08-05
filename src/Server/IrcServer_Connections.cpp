@@ -24,7 +24,7 @@ void	IrcServer::sendWelcomeMessage(int clientSocket)
 	safeSendMessage(clientSocket, welcomeMessage);
 };
 
-void IrcServer::sendMessage(int clientFd, char *message)
+void IrcServer::sendServerResponse(int clientFd, char *message)
 {
 	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 	{
