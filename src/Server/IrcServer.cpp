@@ -33,8 +33,7 @@ void signalHandler(int signal)
 IrcServer::IrcServer()
 {}
 
-//Mandatory constructor, protected with try-catches
-IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverPort(portNumber),  _serverPassword(password), _serverFd(-1)
+IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverFd(-1), _serverPort(portNumber),  _serverPassword(password)
 {
 	//DEFINE SIGHANDLERS
 	std::signal(SIGINT, signalHandler);
@@ -63,10 +62,10 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 		g_clientSockets.push_back(_serverFd);
 	}
 	catch (const IrcServerException& err)
-    {
-        std::cerr << err.what() << std::endl;
-        exit(EXIT_FAILURE);
-    }
+	{
+		std::cerr << err.what() << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
 IrcServer::~IrcServer()
@@ -91,90 +90,179 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 		_serverPassword = cpy._serverPassword;
 		_serverFd = cpy._serverFd;
 		_ConnectedUsers = cpy._ConnectedUsers;
+		_ConnectedUsersMap = cpy._ConnectedUsersMap;
 		_Channels = cpy._Channels;
 	}
 	return *this;
 }
 
-void    IrcServer::clearFdFromList(int clientFd)
+void IrcServer::clearFdFromList(int clientFd)
 {
-    int j = 0;
-    for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-    {
-        if (clientFd == g_clientSockets[i])
+	int j = 0;
+	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+	{
+		if (clientFd == g_clientSockets[i])
 		{
 			FD_CLR(clientFd, &_clientsFdSet);
-            g_clientSockets.erase(g_clientSockets.begin()+j);
+			g_clientSockets.erase(g_clientSockets.begin() + j);
+			_serverResponses.erase(clientFd);
+			this->_ConnectedUsers.removeUser(clientFd);
 			close(clientFd);
+			return ;
 		}
 		j++;
-    }
+	}
 }
 
-int IrcServer::handleRequest(int clientFd)
+void IrcServer::handleRequest(int clientFd)
 {
-    char    buffer[MESSAGE_BUFFER_SIZE] = {0};
-    int     bytes_received;
+	char	buffer[MESSAGE_BUFFER_SIZE] = {0};
+	int		bytes_received;
 
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
-    if (bytes_received == -1) 
+	if (bytes_received == -1)
 	{
-        clearFdFromList(clientFd);
-		// SEND BACK NUMERIC REPLY TO CLIENT 		//
-		/* sendMessage(new_sockfd, welcome_msg);	*/
-		// SEND BACK NUMERIC REPLY TO CLIENT 		//
-		return (-1);
-    }
-    if (bytes_received == 0)
-    {
+		clearFdFromList(clientFd);
+		return;
+	}
+	if (bytes_received == 0)
+	{
 		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
-        clearFdFromList(clientFd);
-		// SEND BACK NUMERIC REPLY TO CLIENT 		//
-		/* sendMessage(new_sockfd, welcome_msg);	*/
-		// SEND BACK NUMERIC REPLY TO CLIENT 		//
-        return (0);
-    }
+		clearFdFromList(clientFd);
+		return;
+	}
 	printSocketData(clientFd, buffer);
-	// SEND BACK NUMERIC REPLY TO CLIENT 		//
-	/* sendMessage(clientFd, welcome_msg);		*/
-	// SEND BACK NUMERIC REPLY TO CLIENT 		//
-	return (0);
+	
+	//REFACTOR INTO METHODS
+	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
+	std::stringstream request(buffer);
+	std::string command;
+	std::string argument;
+
+	request >> command;
+	request >> argument;
+
+	User *user = _ConnectedUsers.getUser(clientFd);
+	//PASS COMMAND
+	//IF the command is PASS, and it has an argument, and the client hasn't logged in yet
+	if (command == "PASS" && !argument.empty() && !user->hasPassword())
+	{
+		if (argument == _serverPassword)
+		{
+			user->setHasPassword(true);
+			std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+		}
+		else
+		{
+			std::string message = "Wrong password.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			return ;
+		}
+	}
+	//IF the client is already logged in
+	else
+	{
+		if (command == "PASS" && !argument.empty() && user->hasPassword())
+		{
+			std::string message = "You're already logged in.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			return ;
+		}
+	}
+	//NICK COMMAND
+	//IF the command is nick, and there is an argument, and the user is logged in
+	if (command == "NICK" && !argument.empty() && user->hasPassword())
+	{
+		//Check if the user is known
+		User *isKnownUser = _ConnectedUsers.getUser(argument);
+		//IF if its a known user, check if it is THIS client or another client
+		if (isKnownUser)
+		{
+			if (isKnownUser != user)
+			{
+				std::string message = "Sorry! This nickname is already taken.\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				return ;
+			}
+			else
+			{
+				std::string message = "Your nickname has already been set.\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				return ;
+			}
+		}
+		//IF the user is not known, check if it already has a nickname (update), otherwise set it
+		else
+		{
+			if (user == _ConnectedUsers.getUser(clientFd) && user->getNickname() != "")
+			{
+				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
+				user->setNickname(argument);
+				std::string message = "Your username has been updated to [" + user->getNickname() + "].\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				return ;
+			}
+			else
+			{
+				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
+				// set nickname inside of linkUserToNickname ???
+				user->setNickname(argument);
+				std::string message = "Hello " + user->getNickname() + "! You are now fully authenticated.\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			}
+		}
+	}
+	//COMMAND WITHOUT PASS
+	else
+	{
+		if (command != "PASS" && !argument.empty() && !user->hasPassword())
+		{
+			std::string message = "Please enter the server password first.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			return ;
+		}
+	}
+	return;
+	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 }
 
 void IrcServer::run()
 {
-	std::istringstream	requestField;
-	std::string			requestStatus;
-
-
 	FD_ZERO(&_clientsFdSet);
-    FD_SET(_serverFd, &_clientsFdSet);
+	FD_SET(_serverFd, &_clientsFdSet);
+
 	while (true)
 	{
-		fd_set	tmpSet = _clientsFdSet;
+		fd_set tmpSet = _clientsFdSet;
 		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1)
-        {
-            std::cerr << "Error : Problem with file descriptor set." << std::endl;
-        }
-        if (FD_ISSET(_serverFd, &tmpSet))
-        {
-            if (acceptClient() == -1)
-            {
-	        	std::cerr << "Error : Couldn't accept client." << std::endl;
+		{
+			std::cerr << "Error : Problem with file descriptor set." << std::endl;
+		}
+		if (FD_ISSET(_serverFd, &tmpSet))
+		{
+			if (acceptClient() == -1)
+				std::cerr << "Error : Couldn't accept client." << std::endl;
+		} 
+		else 
+		{
+			for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+			{
+				if (FD_ISSET(g_clientSockets[i], &tmpSet))
+					handleRequest(g_clientSockets[i]);
 			}
-        }
-        else
-        {
-            for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-            {
-                if (FD_ISSET(g_clientSockets[i], &tmpSet))
-                {    
-                    if (handleRequest(g_clientSockets[i]) == -1)
-                    {
-		          		std::cerr << "Error : Couldn't handle request." << std::endl;
-					}
-                }
-            }
-        }
+		}
+		// Handle server responses
+		std::map<int, std::string>::iterator it;
+		for (it = _serverResponses.begin(); it != _serverResponses.end(); ++it)
+		{
+			int					clientFd = it->first;
+			const std::string&	message = it->second;
+			if (!message.empty())
+			{
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				it->second = ""; // Clear the message after sending
+			}
+		}
 	}
 }

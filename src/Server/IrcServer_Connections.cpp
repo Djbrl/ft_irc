@@ -1,57 +1,61 @@
 #include "IrcServer.hpp"
 
-void    IrcServer::decorticateMessage(int targeted_client, char *msg)
+void    IrcServer::safeSendMessage(int clientFd, char *message)
 {
-    int sent;
-	int already_sent = 0;
-	int msg_len = strlen(msg); //length of the message to be sent
+	int bytes;
+	int dataSent = 0;
+	int messageLen = strlen(message); //length of the message to be sent
 
-	while (already_sent < msg_len)
-    {
-		if ((sent = send(targeted_client, msg + already_sent, msg_len - already_sent, MSG_DONTWAIT)) <= 0)
+	while (dataSent < messageLen)
+	{
+		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
+		{
+			std::cout << "Error : Couldn't send data to client." << std::endl;
 			return ;
-		already_sent += sent;
-	}  
+		}
+		dataSent += bytes;
+	}
+	return ;
 }
 
-//sending the message to every client that is not the sender !
-void    IrcServer::sendMessage(int sender_fd, char *msg)
+void	IrcServer::sendWelcomeMessage(int clientSocket)
 {
-    for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-    {
-        if (g_clientSockets[i] != sender_fd)  
-            decorticateMessage(g_clientSockets[i], msg);
-    }
+	char welcomeMessage[512] = "\nWelcome to ft_IRC! This server requires a password. Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
+	safeSendMessage(clientSocket, welcomeMessage);
+};
 
+void IrcServer::sendServerResponse(int clientFd, char *message)
+{
+	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
+	{
+		if (g_clientSockets[i] == clientFd)
+			_serverResponses[g_clientSockets[i]] = message;
+	}
 }
 
-// Accept connections from clients on the serverFd and print a message with the clientFD and the IP
 int IrcServer::acceptClient()
 {
-    sockaddr	clientSockAddr;
 	std::string	clientIP;
-    int			clientAddrLen;
-    int			dataSocketFd;
+	sockaddr	clientSockAddr;
+	int			clientAddrLen;
+	int			dataSocketFd;
 
 	try
-    {
-        clientAddrLen = sizeof(_serverSockAddr);
-        if ((dataSocketFd = accept(_serverFd, (struct sockaddr *)&clientSockAddr, (socklen_t *)&clientAddrLen)) == -1)
-            throw AcceptException();
-
-        FD_SET(dataSocketFd, &_clientsFdSet);
-        g_clientSockets.push_back(dataSocketFd);
-    	clientIP = inet_ntoa(((struct sockaddr_in *)&clientSockAddr)->sin_addr);
-        std::cout << Utils::getLocalTime() << "New client connection : [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
-        // SEND BACK NUMERIC REPLY TO CLIENT //
-        /* send_message(new_sockfd, welcome_msg); */
-        // SEND BACK NUMERIC REPLY TO CLIENT //
-    }
-    catch (const AcceptException &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    return dataSocketFd;
+	{
+		clientAddrLen = sizeof(_serverSockAddr);
+		if ((dataSocketFd = accept(_serverFd, (struct sockaddr*)&clientSockAddr, (socklen_t*)&clientAddrLen)) == -1)
+			throw AcceptException();
+		FD_SET(dataSocketFd, &_clientsFdSet);
+		g_clientSockets.push_back(dataSocketFd);
+		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
+		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
+		sendWelcomeMessage(dataSocketFd);
+		//CREATE A USER AND PUT IT IN LOBBYMAP UNTIL HE GIVES PASS AND NICK
+		this->_ConnectedUsers.addUser(dataSocketFd);
+	} catch (const AcceptException& e) {
+		std::cerr << e.what() << '\n';
+	}
+	return dataSocketFd;
 }
 
 std::string     IrcServer::parsePassCommand(int clientFd, std::stringstream &commandCopy) {
@@ -195,7 +199,7 @@ void	IrcServer::parseQuery(int clientFd, std::string clientQuery) {
 //Display the data received from the current connected client
 void IrcServer::printSocketData(int clientSocket, char* socketData)
 {
-    std::string	clientIP;
+	std::string	clientIP;
 
 	clientIP = inet_ntoa(_serverSockAddr.sin_addr);
     // std::cout << Utils::getLocalTime() << "[" << Utils::trimBackline(socketData) << "] received from client[" << clientSocket << "] " << BYELLOW << clientIP << RESET << "." << std::endl;

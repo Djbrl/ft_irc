@@ -1,30 +1,36 @@
 #include "User.hpp"
 
 User::User()
-{}
+{
+	_nickname = "";
+	_username = "";
+	_registrationDate = time(NULL);
+	_lastActiveTime = time(NULL);
+	_isOperator = false;
+	_hasPassword = false;
+}
 
 User::~User()
 {}
 
-User::User(const std::string &name)
-{
-	_nickname = name;
-	_username = "";
-	_registrationDate = time(NULL);
-	_lastActiveTime = time(NULL);
-	_isConnected = false;
-	_isOperator = false;
-}
+// User::User(const std::string &name)
+// {
+// 	_nickname = name;
+// 	_username = "";
+// 	_registrationDate = time(NULL);
+// 	_lastActiveTime = time(NULL);
+// 	_isConnected = false;
+// 	_isOperator = false;
+// }
 
-User::User(const std::string &name, const std::string &uname)
-{
-	_nickname = name;
-	_username = uname;
-	_registrationDate = time(NULL);
-	_lastActiveTime = time(NULL);
-	_isConnected = false;
-	_isOperator = false;
-}
+// User::User(const std::string &name, const std::string &uname)
+// {
+// 	_nickname = name;
+// 	_username = uname;
+// 	_registrationDate = time(NULL);
+// 	_lastActiveTime = time(NULL);
+// 	_isOperator = false;
+// }
 
 User::User(const User &cpy)
 {
@@ -40,7 +46,6 @@ User&	User::operator=(const User &cpy)
 		this->_username = cpy._username;
 		this->_registrationDate = cpy._registrationDate;
 		this->_lastActiveTime = cpy._lastActiveTime;
-		this->_isConnected = cpy._isConnected;
 		this->_isOperator = cpy._isOperator;
 		this->_messageQueue = cpy._messageQueue;
 	}
@@ -86,6 +91,24 @@ void User::removeMessageFromQueue(const std::string& message)
     }
 }
 
+bool User::hasPassword() const
+{
+	return this->_hasPassword;
+}
+
+//return true when a client has received PASS, NICK, USER
+bool User::isAuthentificated() const
+{
+	return
+	(
+		this->_hasPassword &&
+		!this->_username.empty() &&
+		!this->_username.empty() &&
+		!this->_realname.empty() &&
+		!this->_hostname.empty()
+	);
+}
+
 //GETTERS______________________________________________________________________________________________________
 
 std::string					User::getNickname() const
@@ -108,11 +131,6 @@ time_t						User::getLastActiveTime() const
 	return _lastActiveTime;
 }
 
-bool						User::getIsConnected() const
-{
-	return _isConnected;
-}
-
 bool						User::getIsOperator() const
 {
 	return _isOperator;
@@ -123,12 +141,12 @@ std::vector<std::string>	User::getMessageQueue() const
 	return _messageQueue;
 }
 
-//SETTERS______________________________________________________________________________________________________
-
-void	User::setConnectedStatus(bool status)
+int							User::getSocket() const
 {
-	_isConnected = status;
+	return _socket;
 }
+
+//SETTERS______________________________________________________________________________________________________
 
 void    User::setOperatorStatus(bool status)
 {
@@ -145,6 +163,16 @@ void    User::setUsername(const std::string &uname)
 	_username = uname;
 }
 
+void	User::setSocket(const int socket_fd)
+{
+	_socket = socket_fd;
+}
+
+void	User::setHasPassword(const bool status)
+{
+	this->_hasPassword = status;
+}
+
 //EXTERN OPERATORS_____________________________________________________________________________________________
 
 
@@ -156,8 +184,6 @@ std::ostream	&operator<<(std::ostream &flux, const User& rhs)
 	flux << "User registration date: " << std::ctime(&time);
 	time = rhs.getLastActiveTime();
 	flux << "User last active time: " << std::ctime(&time);
-	flux << "User connection status: " << (rhs.getIsConnected() ? "Online" : "Offline") << std::endl;
-	flux << "User operator status: " << (rhs.getIsConnected() ? "Yes" : "No") << std::endl;
 	flux << "User messages in queue: \n";
 	std::cout << "[";
 	for (size_t i = 0; i < rhs.getMessageQueue().size(); ++i)
