@@ -7,15 +7,6 @@
 # include "User.hpp"
 # include "UserMap.hpp"
 
-// Macros
-#define PASS "PASS"
-#define USER "USER"
-#define NICK "NICK"
-#define INVITE "INVITE"
-#define MODE "MODE"
-#define TOPIC "TOPIC"
-#define KICK "KICK"
-
 //IRCSERVER CLASS____________________________________________________________________________________________________
 //IrcServer inherits from AServer, and carries all the methods and attributes needed for our IRC Server 
 
@@ -44,7 +35,7 @@ class IrcServer : public AServer
 
 	//PARSING
 	void								parseQuery(int clientFd, std::string clientQuery);
-	void								queryDispatch(int clientFd, std::string clientQuery);
+	void								dispatchQuery(int clientFd, std::string clientQuery);
 	void    							passCommand(int clientFd, std::string passCommand, std::stringstream &commandCopy);
 	std::string     					parsePassCommand(int clientFd, std::stringstream &commandCopy);
 

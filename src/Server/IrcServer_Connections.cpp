@@ -121,7 +121,7 @@ void    IrcServer::passCommand(int clientFd, std::string passCommand, std::strin
 
 }
 
-void    IrcServer::queryDispatch(int clientFd, std::string clientQuery) {
+void    IrcServer::dispatchQuery(int clientFd, std::string clientQuery) {
 
     std::stringstream   queryCopy(clientQuery);
     std::string         command;
@@ -183,7 +183,7 @@ void	IrcServer::parseQuery(int clientFd, std::string clientQuery) {
         std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
 
         //implement the parsing logic for each command individually but dispatch them first
-        queryDispatch(clientFd, subQuery);
+        dispatchQuery(clientFd, subQuery);
 
         //update start to analyze the rest of the query
         start = found + 2;

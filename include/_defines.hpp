@@ -49,6 +49,16 @@
 # define MAX_DATA_SIZE          4096
 # define MESSAGE_BUFFER_SIZE    1024
 
+//COMMANDS_____________________________________________________________________________________________________________
+
+# define PASS "PASS"
+# define USER "USER"
+# define NICK "NICK"
+# define INVITE "INVITE"
+# define MODE "MODE"
+# define TOPIC "TOPIC"
+# define KICK "KICK"
+
 //GLOBAL_____________________________________________________________________________________________________________
 
 typedef struct sockaddr_in	sockaddr_in_t;
