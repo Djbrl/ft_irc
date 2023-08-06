@@ -33,7 +33,7 @@ void signalHandler(int signal)
 IrcServer::IrcServer()
 {}
 
-IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverPort(portNumber),  _serverPassword(password), _serverFd(-1)
+IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverFd(-1), _serverPort(portNumber),  _serverPassword(password)
 {
 	//DEFINE SIGHANDLERS
 	std::signal(SIGINT, signalHandler);
@@ -90,6 +90,7 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 		_serverPassword = cpy._serverPassword;
 		_serverFd = cpy._serverFd;
 		_ConnectedUsers = cpy._ConnectedUsers;
+		_ConnectedUsersMap = cpy._ConnectedUsersMap;
 		_Channels = cpy._Channels;
 	}
 	return *this;
