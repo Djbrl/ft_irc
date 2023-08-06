@@ -38,30 +38,26 @@ class IrcServer : public AServer
 										IrcServer(const IrcServer &cpy);
 	IrcServer							&operator=(const IrcServer &cpy);
 	//METHODS__________________________________________________________________________________________________
+	//CONNECTION
 	void								run();
 	int									acceptClient();
-	void								printSocketData(int clientSocket, char *socketData);
-	//camille
-	void			parseQuery(int clientFd, std::string clientQuery);
-	void			queryDispatch(int clientFd, std::string clientQuery);
-	void    		passCommand(int clientFd, std::string passCommand, std::stringstream &commandCopy);
-	std::string     parsePassCommand(int clientFd, std::stringstream &commandCopy);
 
-	void								handleClientWrite(int clientSocket);
+	//PARSING
+	void								parseQuery(int clientFd, std::string clientQuery);
+	void								queryDispatch(int clientFd, std::string clientQuery);
+	void    							passCommand(int clientFd, std::string passCommand, std::stringstream &commandCopy);
+	std::string     					parsePassCommand(int clientFd, std::stringstream &commandCopy);
+
+	//PROCESS
 	void								sendWelcomeMessage(int clientSocket);
 	void   								safeSendMessage(int targeted_client, char *msg);
 	void   								sendServerResponse(int sender_fd, char *msg);
-	void    							clearFdFromList(int client_fd);
 	void								handleRequest(int clientFd);
-										//authenticateClient
-										//createChannel
-											//Channel related methods...
-										//loginUser
-											//User related methods...
+	
+	//UTILS
+	void    							clearFdFromList(int client_fd);
+	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________
-	User								*getUser(int socket_fd);
-	User								*getUser(std::string &nickname);
-
 	//SETTERS__________________________________________________________________________________________________
 };
 
