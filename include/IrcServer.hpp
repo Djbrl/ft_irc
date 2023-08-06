@@ -5,6 +5,7 @@
 # include "AServer.hpp"
 # include "Channel.hpp"
 # include "User.hpp"
+# include "UserMap.hpp"
 
 //IRCSERVER CLASS____________________________________________________________________________________________________
 //IrcServer inherits from AServer, and carries all the methods and attributes needed for our IRC Server 
@@ -15,9 +16,10 @@ class IrcServer : public AServer
 	int									_serverFd;
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
+	UserMap							    _ConnectedUsers;
 	sockaddr_in_t						_serverSockAddr;
 	std::map<std::string, Channel>		_Channels;
-	std::map<std::string, User>			_ConnectedUsers;
+	std::map<std::string, User>			_ConnectedUsersMap;
 	std::map<int, std::string>			_serverResponses;
 	fd_set								_clientsFdSet;
 										IrcServer();
@@ -42,6 +44,9 @@ class IrcServer : public AServer
 										//loginUser
 											//User related methods...
 	//GETTERS__________________________________________________________________________________________________
+	User								*getUser(int socket_fd);
+	User								*getUser(std::string &nickname);
+
 	//SETTERS__________________________________________________________________________________________________
 };
 

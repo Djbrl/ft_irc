@@ -12,9 +12,12 @@ class User
 		std::vector<std::string>	_messageQueue;
 		std::string					_nickname;
 		std::string					_username;
+		std::string					_realname;
+		std::string					_hostname;
 		time_t						_registrationDate;
 		time_t						_lastActiveTime;
-		bool						_isConnected;
+		int							_socket;
+		bool						_hasPassword;
 		bool						_isOperator;
 
 	public:
@@ -29,6 +32,8 @@ class User
     
 	void 							addMessageToQueue(const std::string& message);
     void 							removeMessageFromQueue(const std::string& message);
+	bool							isAuthentificated() const;
+	bool							hasPassword() const;
 									//authenticate
 									//joinChannel
 									//sendMessage
@@ -49,6 +54,7 @@ class User
 	bool							getIsConnected() const;
 	bool							getIsOperator() const;
     std::vector<std::string>		getMessageQueue() const;
+	int								getSocket() const;
     
 	//SETTERS__________________________________________________________________________________________________
 	
@@ -56,6 +62,8 @@ class User
 	void							setOperatorStatus(bool status);
 	void							setNickname(const std::string &name);
 	void							setUsername(const std::string &uname);
+	void							setHasPassword(const bool state);
+	void							setSocket(const int socket_fd);
 
     //OPERATORS________________________________________________________________________________________________
 	//Silence error with std::remove, _nickname is the identifier to compare two users
