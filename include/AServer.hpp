@@ -86,6 +86,7 @@ public:
 				return "SelectHandlerException: Failed to handle socket in select().";
 			}
 	};
+
 };
 
 #endif

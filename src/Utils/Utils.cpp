@@ -31,3 +31,13 @@ std::string	Utils::trimBackline(const std::string &request)
 {
 	return request.substr(0, request.length() - 1);
 }
+
+bool Utils::isEven(std::size_t index)
+{
+    return(index % 2 == 0);
+}
+
+bool Utils::isOdd(std::size_t index)
+{
+    return(index % 2 != 0);
+}
