@@ -20,7 +20,7 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 
 void	IrcServer::sendWelcomeMessage(int clientSocket)
 {
-	char welcomeMessage[512] = "Welcome to ft_IRC! This server requires a password. Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\r\n";
+	char welcomeMessage[512] = "\nWelcome to ft_IRC! This server requires a password. Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
 	safeSendMessage(clientSocket, welcomeMessage);
 };
 

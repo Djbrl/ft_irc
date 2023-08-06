@@ -199,7 +199,7 @@ void IrcServer::handleRequest(int clientFd)
 			{
 				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
 				user->setNickname(argument);
-				message = "Your username has been updated to [" + user->getNickname() + "].\r\n";
+				std::string message = "Your username has been updated to [" + user->getNickname() + "].\r\n";
 				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 				return ;
 			}
