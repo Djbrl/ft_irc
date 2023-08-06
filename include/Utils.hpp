@@ -12,6 +12,8 @@ class Utils
 		static std::string	getLocalTime();
 		static bool			isPrintableStr(const std::string& message);
 		static std::string	trimBackline(const std::string &request);
+        static bool         isEven(std::size_t index);
+        static bool         isOdd(std::size_t index);
 
 		//TEMPLATES__________________________________________________________________________________________________
         template <typename T, typename P>

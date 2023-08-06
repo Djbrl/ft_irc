@@ -6,6 +6,15 @@
 # include "Channel.hpp"
 # include "User.hpp"
 
+// Macros
+#define PASS "PASS"
+#define USER "USER"
+#define NICK "NICK"
+#define INVITE "INVITE"
+#define MODE "MODE"
+#define TOPIC "TOPIC"
+#define KICK "KICK"
+
 //IRCSERVER CLASS____________________________________________________________________________________________________
 //IrcServer inherits from AServer, and carries all the methods and attributes needed for our IRC Server 
 
@@ -32,13 +41,16 @@ class IrcServer : public AServer
 	int									acceptClient();
 	void								printSocketData(int clientSocket, char *socketData);
 	//camille
-	void    decorticateMessage(int targeted_client, char *msg);
-	void    sendMessage(int sender_fd, char *msg);
-	void    clearFdFromList(int client_fd);
-	void	parseQuery(std::string clientQuery);
-	void	commandDispatch(std::string clientQuery);
-	int 	new_client();
-	int 	handleRequest(int client_fd);
+	void    		decorticateMessage(int targeted_client, char *msg);
+	void    		sendMessage(int sender_fd, char *msg);
+	void    		clearFdFromList(int client_fd);
+	void			parseQuery(int clientFd, std::string clientQuery);
+	void			queryDispatch(int clientFd, std::string clientQuery);
+	void    		passCommand(int clientFd, std::string passCommand, std::stringstream &commandCopy);
+	std::string     parsePassCommand(int clientFd, std::stringstream &commandCopy);
+	int 			new_client();
+	int 			handleRequest(int client_fd);
+
 										//authenticateClient
 										//createChannel
 											//Channel related methods...

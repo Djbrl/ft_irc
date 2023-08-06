@@ -87,14 +87,6 @@ public:
 			}
 	};
 
-	class QueryParsingException : public IrcServerException
-	{
-		public:
-			virtual const char* what() const throw()
-			{
-				return "QueryParsingException: Something went wrong when parsing client query.";
-			}
-	};
 };
 
 #endif
