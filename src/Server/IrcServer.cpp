@@ -133,26 +133,22 @@ void IrcServer::handleRequest(int clientFd)
 	}
 	printSocketData(clientFd, buffer);
 	
-	//AUTHENTICATION PROTOTYPE
-	//split request assuming this is ONE message (terminated by CRLF)
-	//by rfc1459 there can only one command per message, but multiple messages per request
+	//REFACTOR INTO METHODS
+	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	std::stringstream request(buffer);
 	std::string command;
 	std::string argument;
 
 	request >> command;
 	request >> argument;
-	//check command and argument
-		//to add :
-		//- if the user is already connected, reject PASS request
-		//- figure out what rfc1459 means by only taking the last pass in terms of parsing
+
 	User *user = _ConnectedUsers.getUser(clientFd);
-	if (command == "PASS")
+	//PASS COMMAND
+	//IF the command is PASS, and it has an argument, and the client hasn't logged in yet
+	if (command == "PASS" && !argument.empty() && !user->hasPassword())
 	{
-		if (argument == _serverPassword && !user->hasPassword())
+		if (argument == _serverPassword)
 		{
-			//delete user from lobby to connected users
-			//set user authenticated status to true
 			user->setHasPassword(true);
 			std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
 			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
@@ -161,24 +157,74 @@ void IrcServer::handleRequest(int clientFd)
 		{
 			std::string message = "Wrong password.\r\n";
 			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			return ;
 		}
 	}
-	if (!user->hasPassword())
-		return ;
-	
-	if (command == "NICK")
+	//IF the client is already logged in
+	else
 	{
-		User *already_exist = _ConnectedUsers.getUser(argument);
-		if (already_exist)
-			return ; // TODO: Send error that nickname is already taken
-		this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
-		// set nickname inside of linkUserToNickname ???
-		user->setNickname(argument);
+		if (command == "PASS" && !argument.empty() && user->hasPassword())
+		{
+			std::string message = "You're already logged in.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			return ;
+		}
 	}
-	//if command == anything while user has authenticated status, reject and remind to authenticate
-	//if command == NICK
-		// if user has a non-empty NICK update it, otherwise set nickname to a non-empty NICK, but reject if NICK is already taken, even by same user
+	//NICK COMMAND
+	//IF the command is nick, and there is an argument, and the user is logged in
+	if (command == "NICK" && !argument.empty() && user->hasPassword())
+	{
+		//Check if the user is known
+		User *isKnownUser = _ConnectedUsers.getUser(argument);
+		//IF if its a known user, check if it is THIS client or another client
+		if (isKnownUser)
+		{
+			if (isKnownUser != user)
+			{
+				std::string message = "Sorry! This nickname is already taken.\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				return ;
+			}
+			else
+			{
+				std::string message = "Your nickname has already been set.\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				return ;
+			}
+		}
+		//IF the user is not known, check if it already has a nickname (update), otherwise set it
+		else
+		{
+			if (user == _ConnectedUsers.getUser(clientFd) && user->getNickname() != "")
+			{
+				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
+				user->setNickname(argument);
+				message = "Your username has been updated to [" + user->getNickname() + "].\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+				return ;
+			}
+			else
+			{
+				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
+				// set nickname inside of linkUserToNickname ???
+				user->setNickname(argument);
+				std::string message = "Hello " + user->getNickname() + "! You are now fully authenticated.\r\n";
+				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			}
+		}
+	}
+	//COMMAND WITHOUT PASS
+	else
+	{
+		if (command != "PASS" && !argument.empty() && !user->hasPassword())
+		{
+			std::string message = "Please enter the server password first.\r\n";
+			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+			return ;
+		}
+	}
 	return;
+	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 }
 
 void IrcServer::run()
