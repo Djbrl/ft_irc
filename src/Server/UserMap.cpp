@@ -18,6 +18,15 @@ User *UserMap::addUser(int socket)
     return user;
 }
 
+User *UserMap::linkUserToNickname(std::string &nickname, int socket)
+{
+    User *user = getUser(socket);
+
+    nickname_to_socket.erase(user->getNickname());
+    nickname_to_socket[nickname] = socket;
+    return getUser(nickname);
+}
+
 //Return a *User based on a given socket, return NULL if the User doesn't exist
 User *UserMap::getUser(int socket)
 {

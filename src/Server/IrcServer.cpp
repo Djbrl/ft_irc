@@ -106,6 +106,7 @@ void IrcServer::clearFdFromList(int clientFd)
 			FD_CLR(clientFd, &_clientsFdSet);
 			g_clientSockets.erase(g_clientSockets.begin() + j);
 			_serverResponses.erase(clientFd);
+			this->_ConnectedUsers.removeUser(clientFd);
 			close(clientFd);
 			return ;
 		}
@@ -145,12 +146,14 @@ void IrcServer::handleRequest(int clientFd)
 		//to add :
 		//- if the user is already connected, reject PASS request
 		//- figure out what rfc1459 means by only taking the last pass in terms of parsing
+	User *user = _ConnectedUsers.getUser(clientFd);
 	if (command == "PASS")
 	{
-		if (argument == _serverPassword)
+		if (argument == _serverPassword && !user->hasPassword())
 		{
 			//delete user from lobby to connected users
 			//set user authenticated status to true
+			user->setHasPassword(true);
 			std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
 			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 		}
@@ -159,6 +162,18 @@ void IrcServer::handleRequest(int clientFd)
 			std::string message = "Wrong password.\r\n";
 			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 		}
+	}
+	if (!user->hasPassword())
+		return ;
+	
+	if (command == "NICK")
+	{
+		User *already_exist = _ConnectedUsers.getUser(argument);
+		if (already_exist)
+			return ; // TODO: Send error that nickname is already taken
+		this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
+		// set nickname inside of linkUserToNickname ???
+		user->setNickname(argument);
 	}
 	//if command == anything while user has authenticated status, reject and remind to authenticate
 	//if command == NICK

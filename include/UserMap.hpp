@@ -11,12 +11,12 @@ private:
     std::map<int, User> socket_to_user;
 public:
     std::string &getNicknameFromSocket(int socket);
-    void addUser(int socket, std::string &nickname);
 
     User& operator[](int socket);
     User& operator[](std::string nickname);
     
     User *addUser(int socket); //Return the created User
+    User *linkUserToNickname(std::string &nickname, int socket);
     User *getUser(int socket);
     User *getUser(std::string &nickname);
     bool removeUser(int socket);

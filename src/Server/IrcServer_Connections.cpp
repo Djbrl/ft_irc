@@ -51,7 +51,7 @@ int IrcServer::acceptClient()
 		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
 		sendWelcomeMessage(dataSocketFd);
 		//CREATE A USER AND PUT IT IN LOBBYMAP UNTIL HE GIVES PASS AND NICK
-		//do that here
+		this->_ConnectedUsers.addUser(dataSocketFd);
 	} catch (const AcceptException& e) {
 		std::cerr << e.what() << '\n';
 	}

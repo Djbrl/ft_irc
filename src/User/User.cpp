@@ -168,6 +168,10 @@ void	User::setSocket(const int socket_fd)
 	_socket = socket_fd;
 }
 
+void	User::setHasPassword(const bool status)
+{
+	this->_hasPassword = status;
+}
 
 //EXTERN OPERATORS_____________________________________________________________________________________________
 
