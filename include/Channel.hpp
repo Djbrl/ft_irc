@@ -36,6 +36,13 @@ class Channel
 	void							removeOperator(User &target);
 	void							sendMessageToUsers(const std::string &message, const std::string &author);
 	void							addMessageToHistory(const std::string &message);
+
+	// int								isAMember(const std::string &name);
+
+	//BOOL__________________________________________________________________________________________________
+
+	bool							isChannelOp(User &target);
+
 	//GETTERS__________________________________________________________________________________________________
     
 	const std::string				&getChannelName() const;

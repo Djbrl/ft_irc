@@ -7,7 +7,10 @@ Channel::~Channel()
 {}
 
 Channel::Channel(const std::string &name, User &owner) : _channelName(name), _channelOwner(owner)
-{}
+{
+	this->_operatorsList.push_back(owner); //add the creator of the channel to the operators list
+	this->_membersList.push_back(owner);
+}
 
 Channel::Channel(const Channel &cpy)
 {
@@ -97,6 +100,28 @@ void Channel::sendMessageToUsers(const std::string &text, const std::string &aut
 void Channel::addMessageToHistory(const std::string &message)
 {
 	_messageHistory.push_back(message);
+}
+
+// int	Channel::isAMember(const std::string &name) {
+
+// 	for (std::size_t i = 0; i < _membersList.size(); i++)
+// 	{
+// 		if (_membersList[i]->getUsername() == name)
+// 			return (i);
+// 	}
+// 	return (-1);
+// }
+
+//BOOL_____________________________________________________________________________________________________
+
+bool	Channel::isChannelOp(User &target) {
+
+	for (std::size_t i = 0; i < _operatorsList.size(); i++)
+	{
+		if (_operatorsList[i] == target)
+			return (true);
+	}
+	return (false);
 }
 
 //GETTERS_____________________________________________________________________________________________________

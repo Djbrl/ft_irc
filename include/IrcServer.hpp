@@ -37,6 +37,7 @@ class IrcServer : public AServer
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);
+	// std::map<std::string, Channel>::iterator	isAChannel(const std::string &channelName);		
 
 	//PARSING
 	void								parseQuery(int clientFd, std::string clientQuery);

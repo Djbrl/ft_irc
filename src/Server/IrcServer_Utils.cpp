@@ -62,6 +62,15 @@ void    IrcServer::removeChannel(const std::string &channelName)
 		_Channels.erase(channelName);
 }
 
+// iterator	IrcServer::isAChannel(const std::string &channelName) {
+
+// 	std::map<std::string, Channel>::iterator	it = this->_Channels.find(channelName);
+// 	if (it != this->_Channels.end())
+// 		return (it);
+// 	else
+// 		return (this->_Channels.end())
+// }
+
 //CLEAN UP___________________________________________________________________________________________________________
 
 void    IrcServer::clearFdFromList(int clientFd)

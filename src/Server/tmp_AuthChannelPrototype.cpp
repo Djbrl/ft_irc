@@ -6,7 +6,6 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     std::stringstream request(buffer);
     std::string command;
     std::string argument;
-    std::string argument2;
 
     request >> command;
     request >> argument;
@@ -95,10 +94,9 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     {
         if (argument.size() > 1 && argument.substr(0, 1) == "#")
         {
-            std::string channelName = argument.substr(1, argument.size());
             std::string message = "[" + argument + "]\r\n";
-            addChannel((channelName), *user);
-            _Channels[channelName].addMember(*user);
+            addChannel(argument.substr(1, argument.size()), *user);
+            _Channels[argument.substr(1, argument.size())].addMember(*user);
             safeSendMessage(clientFd, const_cast<char *>(message.c_str()));
         }
         else
@@ -115,10 +113,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     if (command == "PRIVMSG" && !argument.empty() && !msg.empty() && user->isAuthentificated())
     {
         if (argument.size() > 1 && argument.substr(0, 1) == "#")
-        {
-            std::string channelName = argument.substr(1, argument.size());
-            _Channels[channelName].sendMessageToUsers(msg, user->getNickname());
-        }
+            _Channels[argument.substr(1, argument.size())].sendMessageToUsers(msg, user->getNickname());
         else
         {
             std::string message = "Invalid PRIVMSG args.\r\n";
@@ -128,17 +123,34 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     }
 
     //KICK COMMAND PROTOTYPE
-    std::stringstream myrequest(buffer);
-    // std::string cmd;
-    // std::string arg1;
-    // std::string arg2;
+    // if (command == "KICK")
+    // {
+    //     std::map<std::string, Channel>::iterator    it;
+    //     int                                         j;
 
-    // myrequest >> cmd;
-    // myrequest >> arg1;
-    // myrequest >> arg2;
-    if (command == "KICK" && user->isAuthentificated())
-    {
-        //IMPOSSIBLE DE PRINT CORRECTEMENT LE BUFFER
-        std::cout << buffer << std::endl;
-    }
+    //     if ((it = this->isAChannel(first arg) != this->_Channels.end()))
+    //     {
+    //         if (it->isChannelOp(*user)) //user is operator (first arg)
+    //         {
+    //             (if (j = it->isAMember(second arg)) != -1)  //user is in the channel (second arg)
+    //             {
+    //                 it->removeMember(it->_membersList[i]);
+    //             }
+    //             else
+    //             {
+    //                 std::string message = "Sorry, the member you want to remove is not in the channel.\r\n";
+    //                 safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+    //                 return ;                      
+    //             }
+    //         }
+    //         else
+    //         {
+    //             std::string message = "Sorry, you are not the channel operator.\r\n";
+    //             safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+    //             return ;                
+    //         }
+
+    //     }
+    // }
+
 }
