@@ -90,7 +90,6 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 		_serverPassword = cpy._serverPassword;
 		_serverFd = cpy._serverFd;
 		_ConnectedUsers = cpy._ConnectedUsers;
-		_ConnectedUsersMap = cpy._ConnectedUsersMap;
 		_Channels = cpy._Channels;
 	}
 	return *this;
@@ -132,99 +131,12 @@ void IrcServer::handleRequest(int clientFd)
 		return;
 	}
 	printSocketData(clientFd, buffer);
-	
-	//REFACTOR INTO METHODS
-	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
-	std::stringstream request(buffer);
-	std::string command;
-	std::string argument;
+    // parseQuery(clientFd, buffer);
 
-	request >> command;
-	request >> argument;
-
-	User *user = _ConnectedUsers.getUser(clientFd);
-	//PASS COMMAND
-	//IF the command is PASS, and it has an argument, and the client hasn't logged in yet
-	if (command == "PASS" && !argument.empty() && !user->hasPassword())
-	{
-		if (argument == _serverPassword)
-		{
-			user->setHasPassword(true);
-			std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
-			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-		}
-		else
-		{
-			std::string message = "Wrong password.\r\n";
-			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-			return ;
-		}
-	}
-	//IF the client is already logged in
-	else
-	{
-		if (command == "PASS" && !argument.empty() && user->hasPassword())
-		{
-			std::string message = "You're already logged in.\r\n";
-			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-			return ;
-		}
-	}
-	//NICK COMMAND
-	//IF the command is nick, and there is an argument, and the user is logged in
-	if (command == "NICK" && !argument.empty() && user->hasPassword())
-	{
-		//Check if the user is known
-		User *isKnownUser = _ConnectedUsers.getUser(argument);
-		//IF if its a known user, check if it is THIS client or another client
-		if (isKnownUser)
-		{
-			if (isKnownUser != user)
-			{
-				std::string message = "Sorry! This nickname is already taken.\r\n";
-				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-				return ;
-			}
-			else
-			{
-				std::string message = "Your nickname has already been set.\r\n";
-				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-				return ;
-			}
-		}
-		//IF the user is not known, check if it already has a nickname (update), otherwise set it
-		else
-		{
-			if (user == _ConnectedUsers.getUser(clientFd) && user->getNickname() != "")
-			{
-				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
-				user->setNickname(argument);
-				std::string message = "Your username has been updated to [" + user->getNickname() + "].\r\n";
-				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-				return ;
-			}
-			else
-			{
-				this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
-				// set nickname inside of linkUserToNickname ???
-				user->setNickname(argument);
-				std::string message = "Hello " + user->getNickname() + "! You are now fully authenticated.\r\n";
-				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-			}
-		}
-	}
-	//COMMAND WITHOUT PASS
-	else
-	{
-		if (command != "PASS" && !argument.empty() && !user->hasPassword())
-		{
-			std::string message = "Please enter the server password first.\r\n";
-			safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-			return ;
-		}
-	}
-	return;
+    //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
+	dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, buffer);
 	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
+	return ;
 }
 
 void IrcServer::run()

@@ -52,12 +52,13 @@
 //COMMANDS_____________________________________________________________________________________________________________
 
 # define PASS "PASS"
-# define USER "USER"
 # define NICK "NICK"
-# define INVITE "INVITE"
-# define MODE "MODE"
+# define USER "USER"
+# define JOIN "JOIN"
 # define TOPIC "TOPIC"
+# define INVITE "INVITE"
 # define KICK "KICK"
+# define MODE "MODE"
 
 //GLOBAL_____________________________________________________________________________________________________________
 

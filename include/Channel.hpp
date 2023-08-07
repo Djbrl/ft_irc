@@ -15,10 +15,9 @@ class Channel
 		std::string                 _channelPassword;
 		std::vector<User>           _membersList;
 		std::vector<User>           _operatorsList;
-		std::vector<std::string>    _banList;
 		std::vector<std::string>    _modesList;
+		std::vector<std::string>	_messageHistory;
 		User                        _channelOwner;
-		bool                        _isPrivate;
 
 	public:
 									Channel(const std::string &name, User &owner);
@@ -31,31 +30,25 @@ class Channel
 	
 	void							addMember(User &target);
 	void							removeMember(User &target);
-	void							banMember(User &target);
-	void							unbanMember(User &target);
 	void							addMode(const std::string &mode);
 	void							removeMode(const std::string &mode);
 	void							addOperator(User &target);
 	void							removeOperator(User &target);
-    
+	void							addMessageToHistory(const std::string &message);
 	//GETTERS__________________________________________________________________________________________________
     
 	const std::string				&getChannelName() const;
     const std::string				&getChannelTopic() const;
-    const std::string				&getChannelPassword() const;
     const User						&getChannelOwner() const;
-    const bool						&getPrivacyStatus() const;
 	const std::vector<User>			&getMembersList() const;
 	const std::vector<User>			&getOperatorsList() const;
-	const std::vector<std::string>	&getBanList() const;
 	const std::vector<std::string>	&getModesList() const;
+	const std::vector<std::string>	&getMessageHistory() const;
 
     //SETTERS__________________________________________________________________________________________________
     void							setChannelName(const std::string &name);
     void							setChannelTopic(const std::string &topic);
     void							setChannelPassword(const std::string &password);
-    void							setChannelOwner(User &owner);
-    void							setPrivacyStatus(bool &status);
 };
 
 //EXTERN OPERATORS_____________________________________________________________________________________________

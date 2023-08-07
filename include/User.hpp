@@ -9,57 +9,35 @@
 class User
 {
 	private:
-		std::vector<std::string>	_messageQueue;
 		std::string					_nickname;
 		std::string					_username;
-		std::string					_realname;
-		std::string					_hostname;
-		time_t						_registrationDate;
 		time_t						_lastActiveTime;
-		int							_socket;
 		bool						_hasPassword;
-		bool						_isOperator;
+		int							_socket;
 
 	public:
 									User();
 									User(const std::string &name);
-									User(const std::string &name, const std::string &uname);
 									~User();
 									User(const User &cpy);
 	User							&operator=(const User &cpy);
     
 	//METHODS__________________________________________________________________________________________________
     
-	void 							addMessageToQueue(const std::string& message);
-    void 							removeMessageFromQueue(const std::string& message);
 	bool							isAuthentificated() const;
 	bool							hasPassword() const;
-									//authenticate
-									//joinChannel
-									//sendMessage
-									//sendPrivateMessage
+
     //OPERATOR-ONLY____________________________________________________________________________________________
 	
-									//kickUser
-									//inviteUser
-									//viewChannelTopic
-									//setChannelTopic
-									//setChannelMode
 	//GETTERS__________________________________________________________________________________________________
 	
 	std::string						getNickname() const;
 	std::string						getUsername() const;
-    time_t							getRegistrationDate() const;
     time_t							getLastActiveTime() const;
-	bool							getIsConnected() const;
-	bool							getIsOperator() const;
-    std::vector<std::string>		getMessageQueue() const;
 	int								getSocket() const;
     
 	//SETTERS__________________________________________________________________________________________________
 	
-	void							setConnectedStatus(bool status);
-	void							setOperatorStatus(bool status);
 	void							setNickname(const std::string &name);
 	void							setUsername(const std::string &uname);
 	void							setHasPassword(const bool state);

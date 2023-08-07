@@ -16,12 +16,11 @@ class IrcServer : public AServer
 	int									_serverFd;
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
-	UserMap							    _ConnectedUsers;
 	sockaddr_in_t						_serverSockAddr;
-	std::map<std::string, Channel>		_Channels;
-	std::map<std::string, User>			_ConnectedUsersMap;
 	std::map<int, std::string>			_serverResponses;
+	std::map<std::string, Channel>		_Channels;
 	fd_set								_clientsFdSet;
+	UserMap							    _ConnectedUsers;
 										IrcServer();
 	public:
 										~IrcServer();
@@ -32,6 +31,12 @@ class IrcServer : public AServer
 	//CONNECTION
 	void								run();
 	int									acceptClient();
+	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
+
+
+	//CHANNEL
+	void								addChannel(const std::string &channelName, User &owner);
+	void								removeChannel(const std::string &channelName);
 
 	//PARSING
 	void								parseQuery(int clientFd, std::string clientQuery);
