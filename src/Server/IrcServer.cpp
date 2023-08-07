@@ -85,59 +85,19 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 {
 	if (this != &cpy)
 	{
-		_serverSockAddr = cpy._serverSockAddr;
+		_serverFd = cpy._serverFd;
 		_serverPort = cpy._serverPort;
 		_serverPassword = cpy._serverPassword;
-		_serverFd = cpy._serverFd;
+		_serverSockAddr = cpy._serverSockAddr;
+		_serverResponses = cpy._serverResponses;
+		_clientsFdSet = cpy._clientsFdSet;
 		_ConnectedUsers = cpy._ConnectedUsers;
 		_Channels = cpy._Channels;
 	}
 	return *this;
 }
 
-void IrcServer::clearFdFromList(int clientFd)
-{
-	int j = 0;
-	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-	{
-		if (clientFd == g_clientSockets[i])
-		{
-			FD_CLR(clientFd, &_clientsFdSet);
-			g_clientSockets.erase(g_clientSockets.begin() + j);
-			_serverResponses.erase(clientFd);
-			this->_ConnectedUsers.removeUser(clientFd);
-			close(clientFd);
-			return ;
-		}
-		j++;
-	}
-}
-
-void IrcServer::handleRequest(int clientFd)
-{
-	char	buffer[MESSAGE_BUFFER_SIZE] = {0};
-	int		bytes_received;
-
-	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
-	if (bytes_received == -1)
-	{
-		clearFdFromList(clientFd);
-		return;
-	}
-	if (bytes_received == 0)
-	{
-		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
-		clearFdFromList(clientFd);
-		return;
-	}
-	printSocketData(clientFd, buffer);
-    // parseQuery(clientFd, buffer);
-
-    //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
-	dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, buffer);
-	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
-	return ;
-}
+//METHODS________________________________________________________________________________________________________________________________________________
 
 void IrcServer::run()
 {
@@ -177,4 +137,53 @@ void IrcServer::run()
 			}
 		}
 	}
+}
+
+int IrcServer::acceptClient()
+{
+	std::string	clientIP;
+	sockaddr	clientSockAddr;
+	int			clientAddrLen;
+	int			dataSocketFd;
+
+	try
+	{
+		clientAddrLen = sizeof(clientSockAddr);
+		if ((dataSocketFd = accept(_serverFd, (struct sockaddr*)&clientSockAddr, (socklen_t*)&clientAddrLen)) == -1)
+			throw AcceptException();
+		FD_SET(dataSocketFd, &_clientsFdSet);
+		g_clientSockets.push_back(dataSocketFd);
+		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
+		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
+		sendWelcomeMessage(dataSocketFd);
+		this->_ConnectedUsers.addUser(dataSocketFd);
+	} catch (const AcceptException& e) {
+		std::cerr << e.what() << '\n';
+	}
+	return dataSocketFd;
+}
+
+void IrcServer::handleRequest(int clientFd)
+{
+	char	buffer[MESSAGE_BUFFER_SIZE] = {0};
+	int		bytes_received;
+
+	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
+	if (bytes_received == -1)
+	{
+		clearFdFromList(clientFd);
+		return;
+	}
+	if (bytes_received == 0)
+	{
+		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
+		clearFdFromList(clientFd);
+		return;
+	}
+	printSocketData(clientFd, buffer);
+    // parseQuery(clientFd, buffer);
+    //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
+	dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, buffer);
+	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
+	return ;
 }

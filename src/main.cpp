@@ -16,7 +16,7 @@ int main(int ac, char **av)
 		return 1;
 	}
 	std::cout << CLEAR << std::endl;
-	std::cout << TITLE << CLEARLINE << " Ft_irc v4.2 - " << IPADDR << " - " << PORT << RESET << std::endl;
+	std::cout << TITLE << CLEARLINE << " Ft_irc v4.2 - localhost" << " - " << serverPort << RESET << std::endl;
 	std::cout << BLUE << "Waiting for connections..." << RESET << std::endl << std::endl;
 	IrcServer server(serverPort, serverPassword);
 	server.run();

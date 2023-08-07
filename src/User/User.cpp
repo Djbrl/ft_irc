@@ -6,6 +6,7 @@ User::User()
 	_username = "";
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
+	_socket = -1;
 }
 
 User::User(const std::string &name)
@@ -14,6 +15,7 @@ User::User(const std::string &name)
 	_username = "";
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
+	_socket = -1;
 }
 
 User::~User()
@@ -31,7 +33,9 @@ User&	User::operator=(const User &cpy)
 	{
 		this->_nickname = cpy._nickname;
 		this->_username = cpy._username;
+		this->_socket = cpy._socket;
 		this->_lastActiveTime = cpy._lastActiveTime;
+		this->_hasPassword = cpy._socket;
 	}
 	return *this;
 }
@@ -104,6 +108,7 @@ std::ostream	&operator<<(std::ostream &flux, const User& rhs)
 {
 	flux << "User nickname: " << rhs.getNickname() << std::endl;
 	flux << "User username: " << rhs.getUsername() << std::endl;
+	flux << "User socket: " << rhs.getSocket() << std::endl;
 	time_t time = rhs.getLastActiveTime();
 	flux << "User last active time: " << std::ctime(&time);
 	flux << std::endl;

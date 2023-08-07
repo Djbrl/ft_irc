@@ -11,7 +11,6 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     request >> argument;
 
     User *user = _ConnectedUsers.getUser(clientFd);
-
     //COMMAND WITHOUT PASS
     if (command != "PASS" && !argument.empty() && !user->hasPassword())
     {
@@ -27,7 +26,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
         if (argument == _serverPassword)
         {
             user->setHasPassword(true);
-            std::string message = "You're in ! Pick a nickname to start user the server.\r\n";
+            std::string message = "Set your NICK <nickname> to start using the server.\r\n";
             safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
         }
         else
@@ -82,9 +81,8 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
             else
             {
                 this->_ConnectedUsers.linkUserToNickname(argument, clientFd);
-                // set nickname inside of linkUserToNickname ???
                 user->setNickname(argument);
-                std::string message = "Hello " + user->getNickname() + "! You are now fully authenticated.\r\n";
+                std::string message = "Hello " + user->getNickname() + "! You now have user-access to the server.\r\n";
                 safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
             }
         }
@@ -96,10 +94,9 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     {
         if (argument.size() > 1 && argument.substr(0, 1) == "#")
         {
-            std::string message = "Joined channel " + argument + "\r\n";
-            safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+            std::string message = "[" + argument + "]\r\n";
             addChannel(argument.substr(1, argument.size()), *user);
-            message = "Channel Owner : " + _Channels[argument.substr(1, argument.size())].getChannelOwner().getNickname() + "\r\n";
+            _Channels[argument.substr(1, argument.size())].addMember(*user);
             safeSendMessage(clientFd, const_cast<char *>(message.c_str()));
         }
         else
@@ -116,13 +113,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     if (command == "PRIVMSG" && !argument.empty() && !msg.empty() && user->isAuthentificated())
     {
         if (argument.size() > 1 && argument.substr(0, 1) == "#")
-        {
-            std::string message = "Sent " + msg + " to " + argument + "\r\n";
-            safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-            _Channels[argument.substr(1, argument.size())].addMessageToHistory(msg);
-            message = "Channel Owner : " + _Channels[argument.substr(1, argument.size())].getChannelOwner().getNickname() + "\r\n";
-            safeSendMessage(clientFd, const_cast<char *>(message.c_str()));
-        }
+            _Channels[argument.substr(1, argument.size())].sendMessageToUsers(msg, user->getNickname());
         else
         {
             std::string message = "Invalid PRIVMSG args.\r\n";

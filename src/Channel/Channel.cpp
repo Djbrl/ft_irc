@@ -23,6 +23,8 @@ Channel& Channel::operator=(const Channel &cpy)
 	this->_channelTopic = cpy._channelTopic;
 	this->_channelPassword = cpy._channelPassword;
 	this->_membersList = cpy._membersList;
+	this->_operatorsList = cpy._operatorsList;
+	this->_messageHistory = cpy._messageHistory;
 	this->_modesList = cpy._modesList;
 	this->_channelOwner = cpy._channelOwner;
 	return *this;
@@ -39,7 +41,7 @@ void Channel::removeMember(User& target) {
     for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
         if (*it == target) {
             _membersList.erase(it);
-            break; // Exit the loop after erasing the element
+            break ;
         }
     }
 }
@@ -52,7 +54,7 @@ void Channel::removeMode(const std::string& mode) {
     for (std::vector<std::string>::iterator it = _modesList.begin(); it != _modesList.end(); ++it) {
         if (*it == mode) {
             _modesList.erase(it);
-            break; // Exit the loop after erasing the element
+            break ;
         }
     }
 }
@@ -64,9 +66,32 @@ void Channel::removeOperator(User& target) {
     for (std::vector<User>::iterator it = _operatorsList.begin(); it != _operatorsList.end(); ++it) {
         if (*it == target) {
             _operatorsList.erase(it);
-            break; // Exit the loop after erasing the element
+            break ;
         }
     }
+}
+
+void Channel::sendMessageToUsers(const std::string &text, const std::string &author)
+{
+	std::string message = author + ": " + text + "\r\n";
+	int bytes;
+	int dataSent = 0;
+	int messageLen = strlen(message.c_str());
+	for (int i = 0; i < (int)_membersList.size(); i++)
+	{
+		dataSent = 0;
+		while (dataSent < messageLen)
+		{
+			if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
+			{
+				std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":"<< _membersList[i].getSocket() << std::endl;
+				return ;
+			}
+			dataSent += bytes;
+		}
+		addMessageToHistory(message);
+	}
+	return ;
 }
 
 void Channel::addMessageToHistory(const std::string &message)
@@ -131,7 +156,7 @@ std::ostream    &operator<<(std::ostream &flux, const Channel& rhs)
 	flux << "Members List: ";
 	for (size_t i = 0; i < rhs.getMembersList().size(); ++i)
 	{
-		flux << rhs.getMembersList()[i].getNickname();
+		flux << rhs.getMembersList()[i].getNickname() << ":" << rhs.getMembersList()[i].getSocket();
 		if (i < rhs.getMembersList().size() - 1)
 			flux << ", ";
 	}

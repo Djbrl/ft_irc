@@ -34,6 +34,7 @@ class Channel
 	void							removeMode(const std::string &mode);
 	void							addOperator(User &target);
 	void							removeOperator(User &target);
+	void							sendMessageToUsers(const std::string &message, const std::string &author);
 	void							addMessageToHistory(const std::string &message);
 	//GETTERS__________________________________________________________________________________________________
     
