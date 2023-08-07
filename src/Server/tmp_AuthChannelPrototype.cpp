@@ -6,6 +6,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     std::stringstream request(buffer);
     std::string command;
     std::string argument;
+    std::string argument2;
 
     request >> command;
     request >> argument;
@@ -108,7 +109,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
         }
     }
 
-    //PRIVMSG COMMAND PROTOYPE
+    //PRIVMSG COMMAND PROTOTYPE
     std::string msg;
     request >> msg;
     if (command == "PRIVMSG" && !argument.empty() && !msg.empty() && user->isAuthentificated())
@@ -124,5 +125,20 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
             safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
             return ;
         }
+    }
+
+    //KICK COMMAND PROTOTYPE
+    std::stringstream myrequest(buffer);
+    // std::string cmd;
+    // std::string arg1;
+    // std::string arg2;
+
+    // myrequest >> cmd;
+    // myrequest >> arg1;
+    // myrequest >> arg2;
+    if (command == "KICK" && user->isAuthentificated())
+    {
+        //IMPOSSIBLE DE PRINT CORRECTEMENT LE BUFFER
+        std::cout << buffer << std::endl;
     }
 }
