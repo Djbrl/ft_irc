@@ -94,9 +94,10 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     {
         if (argument.size() > 1 && argument.substr(0, 1) == "#")
         {
+            std::string channelName = argument.substr(1, argument.size());
             std::string message = "[" + argument + "]\r\n";
-            addChannel(argument.substr(1, argument.size()), *user);
-            _Channels[argument.substr(1, argument.size())].addMember(*user);
+            addChannel((channelName), *user);
+            _Channels[channelName].addMember(*user);
             safeSendMessage(clientFd, const_cast<char *>(message.c_str()));
         }
         else
@@ -113,7 +114,10 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *b
     if (command == "PRIVMSG" && !argument.empty() && !msg.empty() && user->isAuthentificated())
     {
         if (argument.size() > 1 && argument.substr(0, 1) == "#")
-            _Channels[argument.substr(1, argument.size())].sendMessageToUsers(msg, user->getNickname());
+        {
+            std::string channelName = argument.substr(1, argument.size());
+            _Channels[channelName].sendMessageToUsers(msg, user->getNickname());
+        }
         else
         {
             std::string message = "Invalid PRIVMSG args.\r\n";
