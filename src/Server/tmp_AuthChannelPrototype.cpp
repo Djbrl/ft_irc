@@ -3,8 +3,11 @@
 
 void	IrcServer::pass(std::vector<std::string> &requestArguments, User &currentClient)
 {
+	std::cout << "PASS check :" << std::endl;
 	if (requestArguments[0] == "PASS" && !currentClient.hasPassword())
 	{
+		bool check = (requestArguments[1] == _serverPassword);
+		std::cout << requestArguments[1] + ":" + _serverPassword << " - " << check << std::endl;
 		if (requestArguments[1] == _serverPassword)
 		{
 			currentClient.setHasPassword(true);
