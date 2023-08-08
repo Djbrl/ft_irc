@@ -156,6 +156,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 		std::string									channelName = requestArguments[1];
 		std::string									userToRemove = requestArguments[2];
 		
+		//check if channel exists
 		isExistingChannel = _Channels.find(channelName);
 		if (isExistingChannel == _Channels.end())
 		{
@@ -177,31 +178,91 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 			}
 			else
 			{
-				if(isExistingChannel->second.isChannelOp(currentClient)) //the user is channel operator
-				{
-					//can remove user
-					isExistingChannel->second.removeMember(*isExistingUser);
-					std::string messageToKicker = "User has successfully been removed !\r\n";
-	            	safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToKicker.c_str()));
-					//send an explanation to the user who has been kicked out
-					if (requestArguments.size() > 3)
-					{
-						std::string	messageToKicked = "Reason for being kicked, according to ChannelOp ";
-						for (int i = 3; i < (int)requestArguments.size(); i++)
-							messageToKicked += requestArguments[i] + " ";
-						safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
-					}
-					return ;
-				}
-				else
+				if (!isExistingChannel->second.isChannelOp(currentClient)) //the user is not channel operator
 				{
 	            	std::string message = "Sorry, you are not a channel operator. Therefore, you cannot kick a member.\r\n";
 	            	safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
 	            	return ;
 				}
+				else
+				{
+					//can remove user
+					isExistingChannel->second.removeMember(*isExistingUser);
+					std::string	messageToKicked;
+					std::string messageToKicker = "User has successfully been removed !\r\n";
+	            	safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToKicker.c_str()));
+					
+					//send an explanation to the user who has been kicked out
+					if (requestArguments.size() > 3)
+					{
+						messageToKicked = "Reason for being kicked, according to Channel Operator ";
+						for (int i = 3; i < (int)requestArguments.size(); i++)
+							messageToKicked += requestArguments[i] + " " + "\r\n";
+						safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+					}
+					else
+					{
+						messageToKicked = "You have been kicked of channel " + requestArguments[1] + " by channel operator.\r\n";
+						safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+					}
+					return ;
+				}
 			}
 		}
 	}
+}
+
+void	IrcServer::invite(std::vector<std::string> &requestArguments, User &currentClient)
+{
+
+	std::map<std::string, Channel>::iterator	isExistingChannel;
+	std::vector<User>::iterator					isAlreadyInChannel;
+	std::string									userToInvite = requestArguments[1];
+	std::string									channelName = requestArguments[2];
+	bool										isMember;
+
+	//No else needed since there is no requirement to check whether the channel exists or not
+	if ((isExistingChannel = _Channels.find(channelName)) != _Channels.end()) //channel exists
+	{
+		isMember = isExistingChannel->second.hasMember(currentClient); //check if the currenClient is in the channel
+		if (!isMember)
+		{
+			std::string message = "Sorry, you are not member of the channel and therefore cannot invite anyone.\r\n";
+	        safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+			return ;
+		}
+		else
+		{
+			if (!_ConnectedUsers.userExists(userToInvite)) //if user to invite does not exist
+			{
+				std::string message = "Sorry, the user you want to invite does not exist.\r\n";
+	            safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+	            return ;
+			}
+			else
+			{
+				isAlreadyInChannel = isExistingChannel->second.isAMember(userToInvite); //if userToInvite is already in channel
+				if (isAlreadyInChannel != isExistingChannel->second.getMembersList().end())
+				{
+					std::string message = "Sorry, the user you want to invite is already in the channel.\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+					return ;				
+				}
+				else
+				{
+					//STILL NEED TO DO : before removing, check if it is an invite-only channel - if yes, then currenClientmust be a Channel Operator
+					std::string messageToCurrentUser = "Congrats, you successfully invited ";
+					messageToCurrentUser += requestArguments[1] + " to channel " + requestArguments[2] + ".\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToCurrentUser.c_str()));
+					
+					std::string	messageToInvitedUser = currentClient.getNickname() + " invited you to join channel " + requestArguments[2] + ".\r\n";
+					safeSendMessage(_ConnectedUsers.getUser(userToInvite)->getSocket(), const_cast<char*>(messageToInvitedUser.c_str()));
+					return ;
+				}
+			}
+		}
+	}
+
 }
 
 void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentClient)
@@ -244,6 +305,8 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		privmsg(requestArguments, *currentClient);
 	else if (requestArguments[0] == "KICK" && requestArguments.size() > 2)
 		kick(requestArguments, *currentClient);
+	else if (requestArguments[0] == "INVITE" && requestArguments.size() == 3)
+		invite(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PING")
 		pong(requestArguments, *currentClient);
 	return ;

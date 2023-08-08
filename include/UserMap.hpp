@@ -20,6 +20,7 @@ public:
     User *getUser(int socket);
     User *getUser(std::string &nickname);
     bool removeUser(int socket);
+    bool userExists(std::string &nickname);
 
     UserMap();
     ~UserMap();

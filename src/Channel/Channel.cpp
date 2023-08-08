@@ -134,7 +134,6 @@ std::vector<User>::iterator	Channel::isAMember(const std::string &userName) {
     for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
         if (it->getNickname() == userName) {	
 			return (it);
-			break;
 		}
 	}
 	return (_membersList.end());
@@ -147,9 +146,9 @@ bool Channel::hasMember(const User &target) const
     for (std::vector<User>::const_iterator it = _membersList.begin(); it != _membersList.end(); ++it)
     {
         if (*it == target)
-            return true;
+            return (true);
     }
-    return false;
+    return (false);
 }
 
 bool	Channel::isChannelOp(User &target) {
