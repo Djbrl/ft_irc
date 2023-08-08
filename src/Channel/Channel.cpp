@@ -75,16 +75,15 @@ void Channel::removeOperator(User& target) {
 
 void Channel::sendMessageToUsers(const std::string &messageToChannel, const std::string &author)
 {
-	std::string message = ":" + author + " PRIVMSG #" + _channelName + " " + messageToChannel + "\r\n";
-	int bytes;
-	int dataSent = 0;
-	int messageLen = strlen(message.c_str());
+	std::string message = ":" + author + " PRIVMSG " + _channelName + " :" + messageToChannel + "\r\n";
+	int			bytes;
+	int			dataSent = 0;
+	int			messageLen = strlen(message.c_str());
 
-	std::cout << "message author " << author << std::endl;
 	for (int i = 0; i < (int)_membersList.size(); i++)
 	{
 		dataSent = 0;
-		while (dataSent < messageLen)
+		while (dataSent < messageLen && _membersList[i].getNickname() != author)
 		{
 			if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, 0)) <= 0)
 			{
@@ -103,6 +102,29 @@ void Channel::addMessageToHistory(const std::string &message)
 	_messageHistory.push_back(message);
 }
 
+void Channel::showMessageHistory(User &target)
+{
+	std::string		message = "";
+	int				bytes;
+	int				dataSent = 0;
+	int				messageLen;
+
+	for (int i = 0; i < (int)_messageHistory.size() && i < 10; i++)
+		message += _messageHistory[i];
+	messageLen = strlen(message.c_str());
+	while (dataSent < messageLen)
+	{
+		if ((bytes = send(target.getSocket(), const_cast<char*>(message.c_str()) + dataSent, messageLen - dataSent, 0)) <= 0)
+		{
+			std::cout << "Error : Couldn't send data to client." << target.getNickname() << ":"<< target.getSocket() << std::endl;
+			return ;
+		}
+		dataSent += bytes;
+	}
+	return ;
+}
+
+
 // int	Channel::isAMember(const std::string &name) {
 
 // 	for (std::size_t i = 0; i < _membersList.size(); i++)
@@ -120,9 +142,7 @@ bool Channel::hasMember(const User &target) const
     for (std::vector<User>::const_iterator it = _membersList.begin(); it != _membersList.end(); ++it)
     {
         if (*it == target)
-        {
             return true;
-        }
     }
     return false;
 }

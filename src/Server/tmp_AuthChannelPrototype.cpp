@@ -80,18 +80,36 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 	{
 		if (requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#")
 		{
-			std::string channelName = requestArguments[1].substr(1, requestArguments[1].size());
-			std::string message = "[" + channelName + "]\r\n";
-			addChannel(channelName, currentClient);
-			_Channels[channelName].addMember(currentClient);
+			std::map<std::string, Channel>::iterator	isExistingChannel;
+			std::string									channelName = requestArguments[1];
+			std::string									message = "[" + channelName + "]\r\n";
+			
+			isExistingChannel = _Channels.find(channelName);
+			if (isExistingChannel == _Channels.end())
+				addChannel(channelName, currentClient);
+			else
+			{
+				if (_Channels[channelName].hasMember(currentClient))
+				{
+					std::string message = "You're already in " + channelName + " !\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(message.c_str()));				
+					return ;
+				}
+				else
+				{
+					_Channels[channelName].addMember(currentClient);
+					_Channels[channelName].showMessageHistory(currentClient);
+				}
+			}
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(message.c_str()));
-			std::cout << _Channels[channelName] << std::endl;
+			//uncomment to debug channel
+			// std::cout << _Channels[channelName] << std::endl;
 		}
 		else
 		{
 			std::string message = "Invalid channel name.\r\n";
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(message.c_str()));
-			return;
+			return ;
 		}
 	}
 }
@@ -100,15 +118,24 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 {
 	if (requestArguments[0] == "PRIVMSG" && currentClient.isAuthentificated())
 	{
-		std::string	messageToChannel;
+		std::map<std::string, Channel>::iterator	isExistingChannel;
+		std::string									messageToChannel;
+		std::string									channelName = requestArguments[1];
 
+		//BUILD MESSAGE BY MERGING ARGUMENTS
 		for (int i = 2; i < (int)requestArguments.size(); i++)
-		{
 			messageToChannel += requestArguments[i] + " ";
-		}
+		//IF VALID CHANNEL NAME
 		if (requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#")
 		{
-			_Channels[requestArguments[1].substr(1, requestArguments[1].size())].sendMessageToUsers(messageToChannel, currentClient.getNickname());
+			isExistingChannel = _Channels.find(channelName);
+			if (isExistingChannel == _Channels.end())
+			{
+				std::string message = "Non-existent channel : "+ channelName +"\r\n";
+				safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+				return ;
+			}
+			_Channels[channelName].sendMessageToUsers(messageToChannel, currentClient.getNickname());
 		}
 		else
 		{
@@ -121,6 +148,7 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 
 void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentClient)
 {
+	//replace localhost with serverAddr 
     std::string pongReply = "PONG localhost :" + requestArguments[1];
     safeSendMessage(currentClient.getSocket(), const_cast<char*>(pongReply.c_str()));
 }
@@ -134,16 +162,20 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	User						*currentClient;
 
 	currentClient = _ConnectedUsers.getUser(clientFd);
+	//PUT ALL ARGUMENTS IN requestArguments VECTOR
 	while (request >> argument)
 		requestArguments.push_back(argument);
+	//RETURN IF INVALID ARG NUMBER
 	if (requestArguments.size() < 2)
 		return ;
+	//RETURN IF PASS ISNT VALIDATED YET
 	if (requestArguments[0] != "PASS" && currentClient->hasPassword() == false)
 	{
 		std::string message = "Please enter the server password first.\r\n";
 		safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 		return ;
 	}
+	//HANDLE COMMANDS
 	if (requestArguments[0] == "PASS")
 		pass(requestArguments, *currentClient);
 	else if (requestArguments[0] == "NICK")
@@ -182,8 +214,6 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	//             safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
 	//             return ;                
 	//         }
-
 	//     }
 	// }
-
 }
