@@ -2,6 +2,26 @@
 
 //MESSAGES___________________________________________________________________________________________________________
 
+std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketData)
+{
+    std::vector<std::string> result;
+
+    size_t startPos = 0;
+    size_t delimiterPos = socketData.find("\r\n");
+
+    while (delimiterPos != std::string::npos)
+	{
+        result.push_back(socketData.substr(startPos, delimiterPos - startPos));
+        startPos = delimiterPos + 2;
+        delimiterPos = socketData.find("\r\n", startPos);
+    }
+    if (startPos < socketData.length())
+	{
+        result.push_back(socketData.substr(startPos));
+    }
+    return result;
+}
+
 void    IrcServer::safeSendMessage(int clientFd, char *message)
 {
 	int bytes;

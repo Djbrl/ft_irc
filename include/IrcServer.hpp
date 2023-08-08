@@ -31,8 +31,13 @@ class IrcServer : public AServer
 	//CONNECTION
 	void								run();
 	int									acceptClient();
+	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
-
+	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
+	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
+	void								join(std::vector<std::string> &requestArguments, User &currentClient);
+	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
+	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
 
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
@@ -52,6 +57,8 @@ class IrcServer : public AServer
 	void								handleRequest(int clientFd);
 	
 	//UTILS
+	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
+	void								handleCAPLS(int clientFd);
 	void    							clearFdFromList(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________

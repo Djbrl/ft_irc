@@ -121,7 +121,9 @@ void IrcServer::run()
 			for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 			{
 				if (FD_ISSET(g_clientSockets[i], &tmpSet))
+				{
 					handleRequest(g_clientSockets[i]);
+				}
 			}
 		}
 		// Handle server responses
@@ -139,7 +141,14 @@ void IrcServer::run()
 	}
 }
 
-int IrcServer::acceptClient()
+void	IrcServer::handleCAPLS(int clientFd)
+{
+	std::string CAPLS = "CAP * LS :PASS NICK JOIN PRIVMSG PONG\r\n";
+	safeSendMessage(clientFd, const_cast<char *>(CAPLS.c_str()));	
+	return ;
+}
+
+int	IrcServer::acceptClient()
 {
 	std::string	clientIP;
 	sockaddr	clientSockAddr;
@@ -155,6 +164,14 @@ int IrcServer::acceptClient()
 		g_clientSockets.push_back(dataSocketFd);
 		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
 		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
+		char buf[MESSAGE_BUFFER_SIZE];
+		recv(dataSocketFd, buf, MESSAGE_BUFFER_SIZE, 0);
+		std::vector<std::string> request = splitStringByCRLF(std::string(buf));
+		std::stringstream iss(request[0]);
+		std::string word;
+		iss >> word;
+		if (word == "CAP")
+			handleCAPLS(dataSocketFd);
 		sendWelcomeMessage(dataSocketFd);
 		this->_ConnectedUsers.addUser(dataSocketFd);
 	} catch (const AcceptException& e) {
@@ -183,7 +200,12 @@ void IrcServer::handleRequest(int clientFd)
 	printSocketData(clientFd, buffer);
     // parseQuery(clientFd, buffer);
     //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
-	dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, buffer);
+	std::vector<std::string> requests = splitStringByCRLF(buffer);
+	for (int i = 0; i < (int)requests.size(); i++)
+	{
+		std::cout << "command in queue : " << requests[i] << "\n";
+		dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, const_cast<char *>(requests[i].c_str()));
+	}
 	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	return ;
 }

@@ -39,7 +39,6 @@ void Channel::addMember(User& target) {
 	_membersList.push_back(target);
 }
 
-
 void Channel::removeMember(User& target) {
     for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
         if (*it == target) {
@@ -74,18 +73,20 @@ void Channel::removeOperator(User& target) {
     }
 }
 
-void Channel::sendMessageToUsers(const std::string &text, const std::string &author)
+void Channel::sendMessageToUsers(const std::string &messageToChannel, const std::string &author)
 {
-	std::string message = author + ": " + text + "\r\n";
+	std::string message = ":" + author + " PRIVMSG #" + _channelName + " " + messageToChannel + "\r\n";
 	int bytes;
 	int dataSent = 0;
 	int messageLen = strlen(message.c_str());
+
+	std::cout << "message author " << author << std::endl;
 	for (int i = 0; i < (int)_membersList.size(); i++)
 	{
 		dataSent = 0;
 		while (dataSent < messageLen)
 		{
-			if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
+			if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, 0)) <= 0)
 			{
 				std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":"<< _membersList[i].getSocket() << std::endl;
 				return ;
@@ -113,6 +114,18 @@ void Channel::addMessageToHistory(const std::string &message)
 // }
 
 //BOOL_____________________________________________________________________________________________________
+
+bool Channel::hasMember(const User &target) const
+{
+    for (std::vector<User>::const_iterator it = _membersList.begin(); it != _membersList.end(); ++it)
+    {
+        if (*it == target)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 bool	Channel::isChannelOp(User &target) {
 
@@ -192,6 +205,15 @@ std::ostream    &operator<<(std::ostream &flux, const Channel& rhs)
 	{
 		flux << rhs.getModesList()[i];
 		if (i < rhs.getModesList().size() - 1)
+			flux << ", ";
+	}
+	flux << std::endl;
+
+	flux << "Message History: ";
+	for (size_t i = 0; i < rhs.getMessageHistory().size(); ++i)
+	{
+		flux << rhs.getMessageHistory()[i];
+		if (i < rhs.getMessageHistory().size() - 1)
 			flux << ", ";
 	}
 	flux << std::endl;
