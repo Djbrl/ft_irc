@@ -83,14 +83,18 @@ void Channel::sendMessageToUsers(const std::string &messageToChannel, const std:
 	for (int i = 0; i < (int)_membersList.size(); i++)
 	{
 		dataSent = 0;
-		while (dataSent < messageLen && _membersList[i].getNickname() != author)
+		if (_membersList[i].getNickname() != author)
 		{
-			if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, 0)) <= 0)
+			while (dataSent < messageLen)
 			{
-				std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":"<< _membersList[i].getSocket() << std::endl;
-				return ;
+				if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, 0)) <= 0)
+				{
+					perror("channelSend : ");
+					std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":"<< _membersList[i].getSocket() << std::endl;
+					return ;
+				}
+				dataSent += bytes;
 			}
-			dataSent += bytes;
 		}
 		addMessageToHistory(message);
 	}
