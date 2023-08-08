@@ -129,15 +129,16 @@ void Channel::showMessageHistory(User &target)
 }
 
 
-// int	Channel::isAMember(const std::string &name) {
+std::vector<User>::iterator	Channel::isAMember(const std::string &userName) {
 
-// 	for (std::size_t i = 0; i < _membersList.size(); i++)
-// 	{
-// 		if (_membersList[i]->getUsername() == name)
-// 			return (i);
-// 	}
-// 	return (-1);
-// }
+    for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
+        if (it->getNickname() == userName) {	
+			return (it);
+			break;
+		}
+	}
+	return (_membersList.end());
+}
 
 //BOOL_____________________________________________________________________________________________________
 

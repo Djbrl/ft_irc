@@ -146,6 +146,57 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 	}
 }
 
+void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	//No need to verify if requestArguments[0] == "KICK" -> it is done below (HANDLE COMMANDS)
+	if (currentClient.isAuthentificated())
+	{
+		std::map<std::string, Channel>::iterator	isExistingChannel;
+		std::vector<User>::iterator					isExistingUser;
+		std::string									channelName = requestArguments[1];
+		std::string									userToRemove = requestArguments[2];
+		
+		isExistingChannel = _Channels.find(channelName);
+		if (isExistingChannel == _Channels.end())
+		{
+			std::string message = "Sorry, the channel you entered does not exist.\r\n";
+			safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+			return ; 
+		}
+		else
+		{
+			std::vector<User>	test1 = isExistingChannel->second.getMembersList();
+			for (size_t i = 0; i < test1.size(); i++)
+				std::cout << test1[i] << std::endl;
+			isExistingUser = isExistingChannel->second.isAMember(userToRemove);
+			if (isExistingUser == isExistingChannel->second.getMembersList().end())
+			{
+	            std::string message = "Sorry, the user you want to remove is not in the channel\r\n";
+				//send an explanation to the user who has been kicked out
+	            safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+	            return ;				
+			}
+			else
+			{
+				if(isExistingChannel->second.isChannelOp(currentClient)) //the user is channel operator
+				{
+					//can remove user
+					isExistingChannel->second.removeMember(*isExistingUser);
+					std::string message = "User has successfully been removed !\r\n";
+	            	safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+	            	return ;
+				}
+				else
+				{
+	            	std::string message = "Sorry, you are not a channel operator. Yherefore, you cannot kick a member\r\n";
+	            	safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+	            	return ;
+				}
+			}
+		}
+	}
+}
+
 void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	//replace localhost with serverAddr 
@@ -184,36 +235,9 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		join(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PRIVMSG" && requestArguments.size() > 2)
 		privmsg(requestArguments, *currentClient);
+	else if (requestArguments[0] == "KICK" && requestArguments.size() > 2)
+		kick(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PING")
 		pong(requestArguments, *currentClient);
-		return ;
-	//KICK argument PROTOTYPE
-	// if (argument == "KICK")
-	// {
-	//     std::map<std::string, Channel>::iterator    it;
-	//     int                                         j;
-
-	//     if ((it = this->isAChannel(first arg) != this->_Channels.end()))
-	//     {
-	//         if (it->isChannelOp(*user)) //user is operator (first arg)
-	//         {
-	//             (if (j = it->isAMember(second arg)) != -1)  //user is in the channel (second arg)
-	//             {
-	//                 it->removeMember(it->_membersList[i]);
-	//             }
-	//             else
-	//             {
-	//                 std::string message = "Sorry, the member you want to remove is not in the channel.\r\n";
-	//                 safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-	//                 return ;                      
-	//             }
-	//         }
-	//         else
-	//         {
-	//             std::string message = "Sorry, you are not the channel operator.\r\n";
-	//             safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-	//             return ;                
-	//         }
-	//     }
-	// }
+	return ;
 }

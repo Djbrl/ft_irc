@@ -38,11 +38,11 @@ class IrcServer : public AServer
 	void								join(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
-
+	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);
-	// std::map<std::string, Channel>::iterator	isAChannel(const std::string &channelName);		
+	std::map<std::string, Channel>::iterator	isAChannel(const std::string &channelName);		
 
 	//PARSING
 	void								parseQuery(int clientFd, std::string clientQuery);
