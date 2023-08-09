@@ -35,7 +35,7 @@ User&	User::operator=(const User &cpy)
 		this->_username = cpy._username;
 		this->_socket = cpy._socket;
 		this->_lastActiveTime = cpy._lastActiveTime;
-		this->_hasPassword = cpy._socket;
+		this->_hasPassword = cpy._hasPassword;
 	}
 	return *this;
 }
