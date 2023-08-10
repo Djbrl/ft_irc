@@ -41,6 +41,7 @@ class IrcServer : public AServer
 	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
 	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
+	void								topic(std::vector<std::string> &requestArguments, User &currentClient);
 	
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
