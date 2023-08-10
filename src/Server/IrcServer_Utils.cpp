@@ -68,10 +68,20 @@ void    IrcServer::printSocketData(int clientSocket, char* socketData)
 
 void    IrcServer::addChannel(const std::string &channelName, User &owner)
 {
+	std::map<std::string, Channel>::iterator it = _Channels.begin();
 	if (channelName.empty())
 		return ;
-	if (_Channels.find(channelName) == _Channels.end())
-		_Channels[channelName] = Channel(channelName, owner);
+	std::cout << "check if " << channelName << "exists\n";
+	while (it != _Channels.end())
+	{
+		if (it->first == channelName)
+		{
+			std::cout << "found it " << it->first << std::endl;
+			return ;
+		}
+	}
+	_Channels[channelName] = Channel(channelName, owner);
+	std::cout << "created channel : " << _Channels[channelName].getChannelName() << std::endl;
 }
 
 void    IrcServer::removeChannel(const std::string &channelName)
@@ -80,6 +90,17 @@ void    IrcServer::removeChannel(const std::string &channelName)
 		return ;
 	if (_Channels.find(channelName) != _Channels.end())
 		_Channels.erase(channelName);
+}
+
+void	IrcServer::updateMemberInChannels(std::string &oldNick, User &target)
+{
+	std::map<std::string, Channel>::iterator it = _Channels.begin();
+
+	while (it != _Channels.end())
+	{
+		it->second.updateMemberNickname(oldNick, target);
+		it++;
+	}
 }
 
 //CLEAN UP___________________________________________________________________________________________________________

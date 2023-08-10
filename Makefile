@@ -24,7 +24,7 @@ BUILD_PATH =	build/
 
 SRCS = src/main.cpp src/Server/AServer.cpp src/Server/IrcServer.cpp		\
        src/Utils/Utils.cpp src/User/User.cpp src/Channel/Channel.cpp	\
-	   src/Server/IrcServer_Parsing.cpp src/Server/IrcServer_UserMap.cpp			\
+	   src/Server/IrcServer_Parsing.cpp src/Userr/UserMap.cpp			\
 	   src/Server/tmp_AuthChannelPrototype.cpp							\
 	   src/Server/IrcServer_Utils.cpp									
 

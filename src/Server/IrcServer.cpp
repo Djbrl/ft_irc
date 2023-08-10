@@ -33,7 +33,7 @@ void signalHandler(int signal)
 IrcServer::IrcServer()
 {}
 
-IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverFd(-1), _serverPort(portNumber),  _serverPassword(password)
+IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverFd(-1), _serverPort(portNumber),  _serverPassword(password), _serverCreationDate(time(NULL))
 {
 	//DEFINE SIGHANDLERS
 	std::signal(SIGINT, signalHandler);
@@ -126,18 +126,6 @@ void IrcServer::run()
 				}
 			}
 		}
-		// Handle server responses
-		std::map<int, std::string>::iterator it;
-		for (it = _serverResponses.begin(); it != _serverResponses.end(); ++it)
-		{
-			int					clientFd = it->first;
-			const std::string&	message = it->second;
-			if (!message.empty())
-			{
-				safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
-				it->second = ""; // Clear the message after sending
-			}
-		}
 	}
 }
 
@@ -172,7 +160,8 @@ int	IrcServer::acceptClient()
 		iss >> word;
 		if (word == "CAP")
 			handleCAPLS(dataSocketFd);
-		sendWelcomeMessage(dataSocketFd);
+		else
+			sendWelcomeMessage(dataSocketFd);
 		this->_ConnectedUsers.addUser(dataSocketFd);
 	} catch (const AcceptException& e) {
 		std::cerr << e.what() << '\n';
@@ -197,13 +186,13 @@ void IrcServer::handleRequest(int clientFd)
 		clearFdFromList(clientFd);
 		return;
 	}
-	printSocketData(clientFd, buffer);
+	// printSocketData(clientFd, buffer);
     // parseQuery(clientFd, buffer);
     //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	std::vector<std::string> requests = splitStringByCRLF(buffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
-		std::cout << "command in queue : " << requests[i] << "\n";
+		// std::cout << "command in queue : " << requests[i] << "\n";
 		dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, const_cast<char *>(requests[i].c_str()));
 	}
 	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
