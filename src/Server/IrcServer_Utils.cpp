@@ -71,17 +71,12 @@ void    IrcServer::addChannel(const std::string &channelName, User &owner)
 	std::map<std::string, Channel>::iterator it = _Channels.begin();
 	if (channelName.empty())
 		return ;
-	std::cout << "check if " << channelName << "exists\n";
 	while (it != _Channels.end())
 	{
 		if (it->first == channelName)
-		{
-			std::cout << "found it " << it->first << std::endl;
 			return ;
-		}
 	}
 	_Channels[channelName] = Channel(channelName, owner);
-	std::cout << "created channel : " << _Channels[channelName].getChannelName() << std::endl;
 }
 
 void    IrcServer::removeChannel(const std::string &channelName)

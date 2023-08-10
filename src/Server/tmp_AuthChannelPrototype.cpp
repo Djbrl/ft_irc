@@ -111,11 +111,12 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_ALREADYREGISTRED(currentClient.getNickname(), requestArguments[1]).c_str()));
 				else
 				{
+					std::string notification = "joined the channel";
+					_Channels[channelName].sendMessageToUsers(notification, currentClient.getNickname());
 					_Channels[channelName].addMember(currentClient);
 					std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ \
 												RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ \
 												RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
-
 					std::cout << _Channels[channelName] << std::endl;
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
 					usleep(50000);
@@ -143,8 +144,8 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
 		//IF VALID CHANNEL NAME
-		bool isValidChannelName = requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#";
-		if (isValidChannelName)
+		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#";
+		if (isChannelName)
 		{
 			isExistingChannel = _Channels.find(channelName);
 			if (isExistingChannel == _Channels.end())
@@ -153,7 +154,15 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 				_Channels[channelName].sendMessageToUsers(messageToChannel, currentClient.getNickname());
 		}
 		else
-			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+		{
+			if (_ConnectedUsers[requestArguments[1]].isAuthentificated())
+			{
+				std::string DM = ":" + currentClient.getNickname() + " PRIVMSG " + _ConnectedUsers[requestArguments[1]].getNickname() + " :" + messageToChannel + "\r\n";
+				safeSendMessage(_ConnectedUsers[requestArguments[1]].getSocket(), const_cast<char *>(DM.c_str()));
+			}
+			else
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+		}
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
