@@ -38,6 +38,7 @@ class IrcServer : public AServer
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								join(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
+	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
 	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);

@@ -120,6 +120,25 @@ void Channel::sendMessageToUsers(const std::string &messageToChannel, const std:
 	return;
 }
 
+void Channel::sendNoticeToUsers(const std::string &noticeToChannel, const std::string &author)
+{
+	std::string noticeMessage = "NOTICE " + author + " :" + noticeToChannel + "\r\n";
+
+	for (size_t i = 0; i < _membersList.size(); i++)
+	{
+		if (_membersList[i].getNickname() != author)
+		{
+			int bytes = send(_membersList[i].getSocket(), noticeToChannel.c_str(), noticeToChannel.size(), MSG_DONTWAIT);
+			if (bytes <= 0)
+			{
+				std::cout << "Error: Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
+				continue;
+			}
+			usleep(50000);
+		}
+	}
+	return;
+}
 
 void Channel::addMessageToHistory(const std::string &message)
 {
@@ -159,7 +178,9 @@ std::string	Channel::printMemberList() const
 	std::string	memberList;
 	for (size_t i = 0; i < _membersList.size(); i++)
 	{
-		memberList += _membersList[i].getNickname() + ",";
+		memberList += _membersList[i].getNickname();
+		if(i + 1 < _membersList.size())
+			memberList += ",";
 	}
 	return memberList;
 }

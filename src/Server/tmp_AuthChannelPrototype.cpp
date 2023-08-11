@@ -170,12 +170,52 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 				safeSendMessage(_ConnectedUsers[requestArguments[1]].getSocket(), const_cast<char *>(DM.c_str()));
 			}
 			else
-				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHNICK(currentClient.getNickname(), requestArguments[1]).c_str()));
 		}
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
 }
+
+void	IrcServer::notice(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	if (requestArguments[0] == "NOTICE" && currentClient.isAuthentificated())
+	{
+		std::map<std::string, Channel>::iterator	isExistingChannel;
+		std::string									messageToChannel;
+		std::string									channelName = requestArguments[1];
+
+		//BUILD MESSAGE BY MERGING ARGUMENTS
+		for (int i = 2; i < (int)requestArguments.size(); i++)
+			messageToChannel += requestArguments[i] + " ";
+		//IF VALID CHANNEL NAME
+		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#";
+		if (isChannelName)
+		{
+			isExistingChannel = _Channels.find(channelName);
+			if (isExistingChannel == _Channels.end())
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+			else
+			{
+				if (_Channels[channelName].hasMember(currentClient.getNickname()))
+					_Channels[channelName].sendNoticeToUsers(messageToChannel, currentClient.getNickname());
+			}
+		}
+		else
+		{
+			if (_ConnectedUsers[requestArguments[1]].isAuthentificated())
+			{
+				std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + messageToChannel + "\r\n";
+				safeSendMessage(_ConnectedUsers[requestArguments[1]].getSocket(), const_cast<char *>(noticeMessage.c_str()));
+			}
+			else
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHNICK(currentClient.getNickname(), requestArguments[1]).c_str()));
+		}
+	}
+	else
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+}
+
 
 void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentClient)
 {
@@ -410,8 +450,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	//RETURN IF PASS ISNT VALIDATED YET
 	if (requestArguments[0] != "PASS" && !currentClient->hasPassword())
 	{
-		// std::string message = "Please enter the server password first.\r\n";
-		// safeSendMessage(clientFd, const_cast<char*>(message.c_str()));
+		safeSendMessage(currentClient->getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient->getNickname()).c_str()));
 		return ;
 	}
 	//HANDLE COMMANDS
