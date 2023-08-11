@@ -26,20 +26,25 @@ void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentCl
 		if (findClient == NULL && currentClient.getNickname() == "")
 		{
 			//NEW CONNECTION
-			int		nbOfUsers;
-			int		nbOfChannels;
+			int nbOfUsers;
+			int nbOfChannels;
 
 			_ConnectedUsers.linkUserToNickname(requestArguments[1], currentClient.getSocket());
 			currentClient.setNickname(requestArguments[1]);
-			nbOfUsers = _ConnectedUsers.getUserCount();
+			nbOfUsers = _ConnectedUsers.size();
 			nbOfChannels = _Channels.size();
-			std::string	stats =			":localhost Current Local Users: " + std::to_string(nbOfUsers) + \
-										"\r\n:localhost Available Channels: " + std::to_string(nbOfChannels) + "\r\n";
-			std::string RPLResponse =	RPL_WELCOME(requestArguments[1]) + \
-										RPL_YOURHOST(requestArguments[1]) + \
-										RPL_CREATED(requestArguments[1], _serverCreationDate) + \
-										RPL_MYINFO(requestArguments[1]) + \
-										stats;
+
+			std::stringstream statsStream;
+			statsStream << ":localhost Current Local Users: " << nbOfUsers << "\r\n"
+						<< ":localhost Available Channels: " << nbOfChannels << "\r\n";
+
+			std::string stats = statsStream.str();
+			std::string RPLResponse = RPL_WELCOME(requestArguments[1]) +
+									RPL_YOURHOST(requestArguments[1]) +
+									RPL_CREATED(requestArguments[1], _serverCreationDate) +
+									RPL_MYINFO(requestArguments[1]) +
+									stats;
+			
 			safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLResponse.c_str()));
 		}
 		else
@@ -67,10 +72,14 @@ void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentCl
 				newNickname += "_";
 				_ConnectedUsers.linkUserToNickname(newNickname, currentClient.getSocket());
 				currentClient.setNickname(newNickname);
-				nbOfUsers = _ConnectedUsers.getUserCount();
+				nbOfUsers = _ConnectedUsers.size();
 				nbOfChannels = _Channels.size();
-				std::string	stats =			":localhost Current Local Users: " + std::to_string(nbOfUsers) + \
-											"\r\n:localhost Available Channels: " + std::to_string(nbOfChannels) + "\r\n";
+				
+				std::stringstream statsStream;
+				statsStream << ":localhost Current Local Users: " << nbOfUsers << "\r\n"
+							<< ":localhost Available Channels: " << nbOfChannels << "\r\n";
+
+				std::string stats = statsStream.str();
 				std::string RPLResponse =	RPL_WELCOME(newNickname) + \
 											RPL_YOURHOST(newNickname) + \
 											RPL_CREATED(newNickname, _serverCreationDate) + \
@@ -361,9 +370,9 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 		{
 			if (!isExistingChannel->second.isChannelOp(currentClient)) //the user is not channel operator
 			{
-	            std::string message = "Sorry, you are not a channel operator. Therefore, you cannot kick a member.\r\n";
-	        	safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
-	        	return ;
+				std::string message = "Sorry, you are not a channel operator. Therefore, you cannot kick a member.\r\n";
+				safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+				return ;
 			}
 			else
 			{

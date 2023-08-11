@@ -66,7 +66,7 @@ bool UserMap::userExists(std::string &nickname) {
     return (true);
 }
 
-size_t   UserMap::getUserCount() const
+size_t   UserMap::size() const
 {
     return nickname_to_socket.size();
 }
