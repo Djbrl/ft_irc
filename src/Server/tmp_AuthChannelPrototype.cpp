@@ -322,6 +322,85 @@ void	IrcServer::topic(std::vector<std::string> &requestArguments, User &currentC
 
 }
 
+void	IrcServer::setModes(std::string &arg, std::map<std::string, Channel>::iterator &isExistingChannel, User &currentClient)
+{
+	if ((arg[0] != '-' && arg[0] != '+') || arg.size() < 2)
+	{
+			std::string message = "Sorry, something wrong with the arguments.\r\n";
+			safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+			return ; 		
+	}
+	else
+	{
+		char	sign = arg[0];
+		for (std::size_t i = 1; i < arg.size(); i++)
+		{
+			if (arg[i] != '-' && arg[i] != '+')
+			{
+
+			}
+		}
+
+	}
+
+}
+
+
+void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentClient)
+{
+
+	//No need to verify if requestArguments[0] == "MODE" -> it is done below (HANDLE COMMANDS)
+	if (currentClient.isAuthentificated())
+	{
+		std::map<std::string, Channel>::iterator	isExistingChannel;
+		std::string									channelName = requestArguments[1];
+		bool										isMember;
+		
+		//check if channel exists
+		isExistingChannel = _Channels.find(channelName);
+		if (isExistingChannel == _Channels.end())
+		{
+			std::string message = "Sorry, the channel you entered does not exist.\r\n";
+			safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+			return ; 
+		}
+		else
+		{
+			isMember = isExistingChannel->second.hasMember(currentClient); //check if the currenClient is in the channel
+			if (!isMember)
+			{
+				std::string message = "Sorry, you are not member of the channel and therefore cannot invite anyone.\r\n";
+				safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+				return ;
+			}
+			else
+			{
+				if (!isExistingChannel->second.isChannelOp(currentClient)) //the user is not channel operator
+				{
+	            	std::string message = "Sorry, you are not a channel operator. Therefore, you cannot kick a member.\r\n";
+	            	safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+	            	return ;
+				}
+				else
+				{
+					for (std::stize_t i = 2; i < requestArguments.size(); i++)
+					{
+						setModes(requestArguments[i], isExistingChannel);
+					}
+
+				}
+
+			}
+
+
+		}	
+
+
+	}
+
+}
+
+
 void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	//replace localhost with serverAddr 
@@ -360,6 +439,8 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		join(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PRIVMSG" && requestArguments.size() > 2)
 		privmsg(requestArguments, *currentClient);
+	else if (requestArguments[0] == "MODE" && requestArguments.size() > 2)
+		mode(requestArguments, *currentClient);
 	else if (requestArguments[0] == "KICK" && requestArguments.size() > 2)
 		kick(requestArguments, *currentClient);
 	else if (requestArguments[0] == "INVITE" && requestArguments.size() == 3)

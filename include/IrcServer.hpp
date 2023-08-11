@@ -41,7 +41,8 @@ class IrcServer : public AServer
 	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
 	void								topic(std::vector<std::string> &requestArguments, User &currentClient);
-	
+	void								mode(std::vector<std::string> &requestArguments, User &currentClient);
+
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	
