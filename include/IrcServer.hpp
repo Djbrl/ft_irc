@@ -18,6 +18,7 @@ class IrcServer : public AServer
 	std::string							_serverPassword;
 	sockaddr_in_t						_serverSockAddr;
 	std::map<int, std::string>			_serverResponses;
+	time_t								_serverCreationDate;
 	std::map<std::string, Channel>		_Channels;
 	fd_set								_clientsFdSet;
 	UserMap							    _ConnectedUsers;
@@ -46,6 +47,7 @@ class IrcServer : public AServer
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	
+	void								updateMemberInChannels(std::string &oldNick, User &target);
 
 	//PARSING
 	void								parseQuery(int clientFd, std::string clientQuery);

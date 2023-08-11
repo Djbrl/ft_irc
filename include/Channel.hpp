@@ -30,6 +30,7 @@ class Channel
 	
 	void								addMember(User &target);
 	void								removeMember(User &target);
+	void								updateMemberNickname(std::string &oldNick, User &target);
 	void								addMode(const std::string &mode);
 	void								removeMode(const std::string &mode);
 	void								addOperator(User &target);
@@ -37,7 +38,7 @@ class Channel
 	void								sendMessageToUsers(const std::string &message, const std::string &author);
 	void								addMessageToHistory(const std::string &message);
 	void								showMessageHistory(User &target);
-
+	std::string							printMemberList() const;
 	std::vector<User>::iterator			isAMember(const std::string &name);
 
 	//BOOL__________________________________________________________________________________________________
