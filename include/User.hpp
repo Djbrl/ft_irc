@@ -11,6 +11,7 @@ class User
 	private:
 		std::string					_nickname;
 		std::string					_username;
+		std::vector<std::string>	_channelsInvitedTo; //All the channels the user has been invited to
 		time_t						_lastActiveTime;
 		bool						_hasPassword;
 		int							_socket;
@@ -42,10 +43,16 @@ class User
 	void							setUsername(const std::string &uname);
 	void							setHasPassword(const bool state);
 	void							setSocket(const int socket_fd);
+	void							setChannelsList(const std::string &name);
+
+	//BOOLEAN__________________________________________________________________________________________________
+
+	bool							channelIsInList(const std::string &name);
 
     //OPERATORS________________________________________________________________________________________________
 	//Silence error with std::remove, _nickname is the identifier to compare two users
 	bool							operator==(const User& other) const;
+	
 
 	//EXCEPTIONS_______________________________________________________________________________________________
 	class MessageQueueFullException : public std::exception

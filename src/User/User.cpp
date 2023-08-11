@@ -101,6 +101,28 @@ void	User::setHasPassword(const bool status)
 	this->_hasPassword = status;
 }
 
+void	User::setChannelsList(const std::string &name)
+{
+	for (size_t i = 0; i < this->_channelsInvitedTo.size(); i++)
+	{
+		if (this->_channelsInvitedTo[i] == name)
+			return ; //channel is already in the vector
+	}
+	this->_channelsInvitedTo.push_back(name);
+}
+
+//BOOLEAN__________________________________________________________________________________________________
+
+bool	User::channelIsInList(const std::string &name)
+{
+	for (size_t i = 0; i < this->_channelsInvitedTo.size(); i++)
+	{
+		if (this->_channelsInvitedTo[i] == name)
+			return (true);
+	}
+	return (false);
+}
+
 //EXTERN OPERATORS_____________________________________________________________________________________________
 
 

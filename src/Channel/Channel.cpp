@@ -161,7 +161,6 @@ std::string	Channel::printMemberList() const
 	{
 		memberList += _membersList[i].getNickname() + ",";
 	}
-	memberList.pop_back();
 	return memberList;
 }
 
