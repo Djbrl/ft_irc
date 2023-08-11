@@ -50,6 +50,11 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 		_serverSockAddr.sin_addr.s_addr = INADDR_ANY;
 		_serverSockAddr.sin_port = htons(_serverPort);
 		memset(_serverSockAddr.sin_zero, 0, sizeof(_serverSockAddr.sin_zero));
+		
+		//Prevent BindException when restarting the server
+		int opt = 1;
+		setsockopt(_serverFd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+
 		if (bind(_serverFd, (struct sockaddr *)&_serverSockAddr, sizeof(_serverSockAddr)) == -1)
 		{
 			close(_serverFd);
