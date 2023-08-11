@@ -6,6 +6,7 @@
 # include "Channel.hpp"
 # include "User.hpp"
 # include "UserMap.hpp"
+# include "CommandParsing.hpp"
 
 //IRCSERVER CLASS____________________________________________________________________________________________________
 //IrcServer inherits from AServer, and carries all the methods and attributes needed for our IRC Server 

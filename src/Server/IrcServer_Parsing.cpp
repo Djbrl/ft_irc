@@ -103,25 +103,40 @@ void	IrcServer::parseQuery(int clientFd, std::string clientQuery) {
 	if (clientQuery[queryLen - 2] != '\r' || clientQuery[queryLen - 1] != '\n')
 		std::cerr << "Error : Client's request does not end with the appropriate characters." << std::endl;
 	//ignore spaces
-	while (clientQuery[start] == ' ')
-		start++;
+	// while (clientQuery[start] == ' ')
+	// 	start++;
 	found = clientQuery.find("\r\n");
 	while(found != std::string::npos)
 	{
 		end = found;
+		
 		//ignore spaces
-		if (clientQuery[found - 1] == ' ')
-		{
-			end = found;
-			while (clientQuery[end - 1] == ' ')
-				end--;
-		}
+		// if (clientQuery[found - 1] == ' ')
+		// {
+		// 	end = found;
+		// 	while (clientQuery[end - 1] == ' ')
+		// 		end--;
+		// }
 		//extract each command until the next "\r\n"
 		subQuery = clientQuery.substr(start, end - start);
 		std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
 
+		try
+		{
+			std::vector<std::string> args = parse_message(subQuery);
+			for (size_t i = 0; i < args.size(); i++)
+			{
+				std::cout << "[" << i << "] = " << args[i] << std::endl;
+			}
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+		
+		(void) clientFd;
 		//implement the parsing logic for each command individually but dispatch them first
-		dispatchQuery(clientFd, subQuery);
+		// dispatchQuery(clientFd, subQuery);
 
 		//update start to analyze the rest of the query
 		start = found + 2;
