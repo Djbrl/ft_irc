@@ -21,7 +21,7 @@ public:
     User *getUser(std::string &nickname);
     bool removeUser(int socket);
     bool userExists(std::string &nickname);
-    size_t   getUserCount() const;
+    size_t   size() const;
     User    *updateUser(std::string &oldNick, std::string &newNick);
     UserMap();
     ~UserMap();

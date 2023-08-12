@@ -36,6 +36,7 @@ class Channel
 	void								addOperator(User &target);
 	void								removeOperator(User &target);
 	void								sendMessageToUsers(const std::string &message, const std::string &author);
+	void								sendNoticeToUsers(const std::string &message, const std::string &author);
 	void								addMessageToHistory(const std::string &message);
 	void								showMessageHistory(User &target);
 	std::string							printMemberList() const;

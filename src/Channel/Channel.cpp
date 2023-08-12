@@ -42,9 +42,12 @@ void Channel::addMember(User& target)
 	_membersList.push_back(target);
 }
 
-void Channel::removeMember(User& target) {
-	for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
-		if (*it == target) {
+void Channel::removeMember(User& target)
+{
+	for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it)
+	{
+		if (*it == target)
+		{
 			_membersList.erase(it);
 			break ;
 		}
@@ -55,6 +58,7 @@ void Channel::updateMemberNickname(std::string &oldNick, User &target)
 {
 	if (_channelOwner.getNickname() == oldNick)
 		_channelOwner = target;
+	//UPDATE IN MEMBER LIST
 	for (size_t i = 0; i < _membersList.size(); i++)
 	{
 		if (_membersList[i].getNickname() == oldNick)
@@ -63,6 +67,7 @@ void Channel::updateMemberNickname(std::string &oldNick, User &target)
 			return ;
 		}
 	}
+	//UPDATE IN OPERATOR LIST
 	for (size_t i = 0; i < _operatorsList.size(); i++)
 	{
 		if (_operatorsList[i].getNickname() == oldNick)
@@ -120,6 +125,25 @@ void Channel::sendMessageToUsers(const std::string &messageToChannel, const std:
 	return;
 }
 
+void Channel::sendNoticeToUsers(const std::string &noticeToChannel, const std::string &author)
+{
+	std::string noticeMessage = "NOTICE " + author + " :" + noticeToChannel + "\r\n";
+
+	for (size_t i = 0; i < _membersList.size(); i++)
+	{
+		if (_membersList[i].getNickname() != author)
+		{
+			int bytes = send(_membersList[i].getSocket(), noticeToChannel.c_str(), noticeToChannel.size(), MSG_DONTWAIT);
+			if (bytes <= 0)
+			{
+				std::cout << "Error: Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
+				continue;
+			}
+			usleep(50000);
+		}
+	}
+	return;
+}
 
 void Channel::addMessageToHistory(const std::string &message)
 {
@@ -132,7 +156,7 @@ void Channel::showMessageHistory(User &target)
 	int			messageLen = 0;
 
 	for (int i = 0; i < (int)_messageHistory.size(); i++)
-		message += _messageHistory[i] + "\r\n"; // Add line break between messages
+		message += _messageHistory[i] + "\r\n";
 	messageLen = message.size();
 	int bytesSent = send(target.getSocket(), message.c_str(), messageLen, MSG_DONTWAIT);        
 	if (bytesSent == -1 || bytesSent < (int)message.size())
@@ -159,7 +183,9 @@ std::string	Channel::printMemberList() const
 	std::string	memberList;
 	for (size_t i = 0; i < _membersList.size(); i++)
 	{
-		memberList += _membersList[i].getNickname() + ",";
+		memberList += _membersList[i].getNickname();
+		if(i + 1 < _membersList.size())
+			memberList += ",";
 	}
 	return memberList;
 }

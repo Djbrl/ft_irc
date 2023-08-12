@@ -339,7 +339,6 @@ void	IrcServer::topic(std::vector<std::string> &requestArguments, User &currentC
 
 }
 
-
 void	IrcServer::setModes(std::string	&argument, std::map<std::string, Channel>::iterator channel)
 {
 	std::string					sign;

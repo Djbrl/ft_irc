@@ -17,7 +17,6 @@ class IrcServer : public AServer
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
 	sockaddr_in_t						_serverSockAddr;
-	std::map<int, std::string>			_serverResponses;
 	time_t								_serverCreationDate;
 	std::map<std::string, Channel>		_Channels;
 	fd_set								_clientsFdSet;
@@ -32,14 +31,17 @@ class IrcServer : public AServer
 	//METHODS__________________________________________________________________________________________________
 	//CONNECTION
 	void								run();
-	int									acceptClient();
-	
+	void								acceptClient();
 	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
+	void								user(std::vector<std::string> &requestArguments, User &currentClient);
 	void								join(std::vector<std::string> &requestArguments, User &currentClient);
+	void								part(std::vector<std::string> &requestArguments, User &currentClient);
+	void								who(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
+	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
 	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
@@ -61,7 +63,6 @@ class IrcServer : public AServer
 	//PROCESS
 	void								sendWelcomeMessage(int clientSocket);
 	void   								safeSendMessage(int targeted_client, char *msg);
-	void   								sendServerResponse(int sender_fd, char *msg);
 	void								handleRequest(int clientFd);
 	
 	//UTILS
