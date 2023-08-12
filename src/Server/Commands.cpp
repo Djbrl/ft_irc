@@ -1,110 +1,16 @@
 #include "IrcServer.hpp"
 
-
-void IrcServer::pass(std::vector<std::string> &requestArguments, User &currentClient)
-{
-	if (requestArguments[0] == "PASS" && !currentClient.hasPassword())
-	{
-		if (requestArguments[1] == _serverPassword)
-			currentClient.setHasPassword(true);
-		else
-		{
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(ERR_PASSWDMISMATCH(currentClient.getNickname()).c_str()));
-			return ;
-		}
-	}
-	else
-		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_PASSACCEPTED(currentClient.getNickname()).c_str()));
-}
-
-
-void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentClient)
-{
-	if (requestArguments[0] == "NICK" && currentClient.hasPassword())
-	{
-		User *findClient = _ConnectedUsers.getUser(requestArguments[1]);
-		if (findClient == NULL && currentClient.getNickname() == "")
-		{
-			//NEW CONNECTION
-			int nbOfUsers;
-			int nbOfChannels;
-
-			_ConnectedUsers.linkUserToNickname(requestArguments[1], currentClient.getSocket());
-			currentClient.setNickname(requestArguments[1]);
-			nbOfUsers = _ConnectedUsers.size();
-			nbOfChannels = _Channels.size();
-
-			std::stringstream statsStream;
-			statsStream << ":localhost Current Local Users: " << nbOfUsers << "\r\n"
-						<< ":localhost Available Channels: " << nbOfChannels << "\r\n";
-
-			std::string stats = statsStream.str();
-			std::string RPLResponse = RPL_WELCOME(requestArguments[1]) +
-									RPL_YOURHOST(requestArguments[1]) +
-									RPL_CREATED(requestArguments[1], _serverCreationDate) +
-									RPL_MYINFO(requestArguments[1]) +
-									stats;
-			
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLResponse.c_str()));
-		}
-		else
-		{
-			//RENAME REQUEST (ALREADY HAS A NICK)
-			if (currentClient.getNickname() != "" && currentClient.getNickname() != requestArguments[1])
-			{
-				std::string oldNick = currentClient.getNickname();
-				User *updatedUser = _ConnectedUsers.updateUser(oldNick, requestArguments[1]);
-				if (updatedUser == NULL)
-					return ;
-				updateMemberInChannels(oldNick, *updatedUser);
-				std::string RPLmessage = ":" + oldNick + " NICK " + requestArguments[1] + "\r\n";
-				safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLmessage.c_str()));
-				return ;
-			}
-			//NEW CONNECTION
-			//NICKNAME TAKEN
-			if (findClient != NULL && currentClient.getNickname() == "" && findClient->getSocket() != currentClient.getSocket())
-			{
-				int			nbOfUsers;
-				int			nbOfChannels;
-				std::string	newNickname = requestArguments[1];
-
-				newNickname += "_";
-				_ConnectedUsers.linkUserToNickname(newNickname, currentClient.getSocket());
-				currentClient.setNickname(newNickname);
-				nbOfUsers = _ConnectedUsers.size();
-				nbOfChannels = _Channels.size();
-				
-				std::stringstream statsStream;
-				statsStream << ":localhost Current Local Users: " << nbOfUsers << "\r\n"
-							<< ":localhost Available Channels: " << nbOfChannels << "\r\n";
-
-				std::string stats = statsStream.str();
-				std::string RPLResponse =	RPL_WELCOME(newNickname) + \
-											RPL_YOURHOST(newNickname) + \
-											RPL_CREATED(newNickname, _serverCreationDate) + \
-											RPL_MYINFO(newNickname) + \
-											stats;
-				safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLResponse.c_str()));
-				return ;
-			}
-		}
-	}
-	else
-		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-	return ;
-}
-
 void IrcServer::join(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	if (requestArguments[0] == "JOIN" && currentClient.isAuthentificated())
 	{
-		bool isValidChannelName = requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#";
+		bool isValidChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
 		if (isValidChannelName)
 		{
 			std::map<std::string, Channel>::iterator	isExistingChannel;
-			std::string									channelName(requestArguments[1]);
+			std::string									channelName = requestArguments[1];
 
+			//NEW CHANNEL
 			isExistingChannel = _Channels.find(channelName);
 			if (isExistingChannel == _Channels.end())
 			{
@@ -114,6 +20,7 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 											RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
 				safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
 			}
+			//EXISTING CHANNEL
 			else
 			{
 				if (_Channels[channelName].hasMember(currentClient))
@@ -126,12 +33,86 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 					std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ \
 												RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ \
 												RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
-					std::cout << _Channels[channelName] << std::endl;
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
 					usleep(50000);
 					_Channels[channelName].showMessageHistory(currentClient);
 				}
 			}
+		}
+		else
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
+	}
+	else
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+	return ;
+}
+
+void IrcServer::part(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	if (requestArguments[0] == "PART" && currentClient.isAuthentificated())
+	{
+		std::string	channelName = requestArguments[1];
+		bool		isValidChannelName = channelName.size() > 1 && channelName[0] == '#';
+		
+		if (isValidChannelName || _Channels.find(channelName) != _Channels.end())
+		{
+			if (_Channels[channelName].hasMember(currentClient))
+			{
+				//REMOVE MEMBER
+				_Channels[channelName].removeMember(currentClient);
+				if (_Channels[channelName].getChannelOwner() == currentClient)
+				{
+					_Channels[channelName].sendMessageToUsers("(owner) has left the channel", currentClient.getNickname());
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_PARTNOTICE(currentClient.getNickname(), channelName).c_str()));		
+				}
+				else
+				{
+					_Channels[channelName].sendMessageToUsers("left the channel", currentClient.getNickname());
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_PARTNOTICE(currentClient.getNickname(), channelName).c_str()));
+				}
+				//EMPTY CHANNEL
+				if (_Channels[channelName].getMembersList().size() == 0)
+				{
+					_Channels.erase(channelName);
+					std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + channelName + " has been removed for inactivity" + "\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(noticeMessage.c_str()));
+				}
+			}
+			else
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_USERNOTINCHANNEL(currentClient.getNickname(), channelName).c_str()));
+		}
+		else
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
+	}
+	else
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+	return ;
+}
+
+void IrcServer::who(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	if (requestArguments[0] == "WHO" && currentClient.isAuthentificated())
+	{
+		//UNKNOWN CHANNEL
+		if (_Channels.find(requestArguments[1]) == _Channels.end())
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
+			return ;
+		}
+
+		//SEND RESPONSE TO IRSSI
+		std::string	channelName = requestArguments[1];
+		Channel 	channel = _Channels[requestArguments[1]];
+		if (channelName.size() > 1 && channelName[0] == '#')
+		{
+			std::string userList = channel.printMemberList();
+			std::string whoIsResponse = ":ft_irc 352 " + currentClient.getNickname() + " " + channelName + " " + \
+										"ft_irc" + " " + channelName + " " + \
+										currentClient.getNickname() + " H :* " + currentClient.getRealname() + "\r\n";
+			std::string endWhoIsResponse =	":ft_irc 315 " + currentClient.getNickname() + " " + channelName + \
+											" :End of WHO list\r\n";
+			std::string	RPLResponse = whoIsResponse + endWhoIsResponse;
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
 		}
 		else
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
@@ -152,19 +133,21 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 		//BUILD MESSAGE BY MERGING ARGUMENTS
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
-		//IF VALID CHANNEL NAME
-		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#";
+		
+		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
+		//SEND TO CHANNEL
 		if (isChannelName)
 		{
 			isExistingChannel = _Channels.find(channelName);
-			if (isExistingChannel == _Channels.end())
-				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
-			else
+			if (isExistingChannel != _Channels.end())
 				_Channels[channelName].sendMessageToUsers(messageToChannel, currentClient.getNickname());
+			else
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
 		}
+		//SEND TO USER
 		else
 		{
-			if (_ConnectedUsers[requestArguments[1]].isAuthentificated())
+			if (_ConnectedUsers.getUser(requestArguments[1]) != NULL)
 			{
 				std::string DM = ":" + currentClient.getNickname() + " PRIVMSG " + _ConnectedUsers[requestArguments[1]].getNickname() + " :" + messageToChannel + "\r\n";
 				safeSendMessage(_ConnectedUsers[requestArguments[1]].getSocket(), const_cast<char *>(DM.c_str()));
@@ -175,6 +158,7 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+	return ;
 }
 
 void	IrcServer::notice(std::vector<std::string> &requestArguments, User &currentClient)
@@ -182,28 +166,25 @@ void	IrcServer::notice(std::vector<std::string> &requestArguments, User &current
 	if (requestArguments[0] == "NOTICE" && currentClient.isAuthentificated())
 	{
 		std::map<std::string, Channel>::iterator	isExistingChannel;
-		std::string									messageToChannel;
+		std::string									messageToChannel = "NOTICE ";
 		std::string									channelName = requestArguments[1];
 
 		//BUILD MESSAGE BY MERGING ARGUMENTS
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
-		//IF VALID CHANNEL NAME
-		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1].substr(0, 1) == "#";
+		
+		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
 		if (isChannelName)
 		{
 			isExistingChannel = _Channels.find(channelName);
-			if (isExistingChannel == _Channels.end())
-				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+			if (isExistingChannel != _Channels.end())
+				_Channels[channelName].sendNoticeToUsers(messageToChannel, currentClient.getNickname());
 			else
-			{
-				if (_Channels[channelName].hasMember(currentClient.getNickname()))
-					_Channels[channelName].sendNoticeToUsers(messageToChannel, currentClient.getNickname());
-			}
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
 		}
 		else
 		{
-			if (_ConnectedUsers[requestArguments[1]].isAuthentificated())
+			if (_ConnectedUsers.getUser(requestArguments[1]) != NULL)
 			{
 				std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + messageToChannel + "\r\n";
 				safeSendMessage(_ConnectedUsers[requestArguments[1]].getSocket(), const_cast<char *>(noticeMessage.c_str()));
@@ -214,6 +195,7 @@ void	IrcServer::notice(std::vector<std::string> &requestArguments, User &current
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+	return ;
 }
 
 
@@ -296,8 +278,6 @@ void	IrcServer::invite(std::vector<std::string> &requestArguments, User &current
 		// 		safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
 		// 		return ;
 		// 	}
-
-
 
 	//No need to verify if requestArguments[0] == "INVITE" -> it is done below (HANDLE COMMANDS)
 	if (currentClient.isAuthentificated())
@@ -424,54 +404,4 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
 
-}
-
-
-void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentClient)
-{
-	safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPL_PONG(requestArguments[1]).c_str()));
-}
-
-
-void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *socketData)
-{
-	std::vector<std::string> 	requestArguments;
-	std::stringstream			request(socketData);
-	std::string					argument;
-	User						*currentClient;
-
-	currentClient = _ConnectedUsers.getUser(clientFd);
-	//PUT ALL ARGUMENTS IN requestArguments VECTOR
-	while (request >> argument)
-		requestArguments.push_back(argument);
-	//RETURN IF INVALID ARG NUMBER
-	if (requestArguments.size() < 2)
-		return ;
-	//RETURN IF PASS ISNT VALIDATED YET
-	if (requestArguments[0] != "PASS" && !currentClient->hasPassword())
-	{
-		safeSendMessage(currentClient->getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient->getNickname()).c_str()));
-		return ;
-	}
-	//HANDLE COMMANDS
-	std::cout << "Handling command : [" << socketData << "]" << std::endl;
-	if (requestArguments[0] == "PASS")
-		pass(requestArguments, *currentClient);
-	else if (requestArguments[0] == "NICK")
-		nick(requestArguments, *currentClient);
-	else if (requestArguments[0] == "JOIN")
-		join(requestArguments, *currentClient);
-	else if (requestArguments[0] == "PRIVMSG" && requestArguments.size() > 2)
-		privmsg(requestArguments, *currentClient);
-	else if (requestArguments[0] == "MODE" && requestArguments.size() > 2)
-		mode(requestArguments, *currentClient);
-	else if (requestArguments[0] == "KICK" && requestArguments.size() > 2)
-		kick(requestArguments, *currentClient);
-	else if (requestArguments[0] == "INVITE" && requestArguments.size() == 3)
-		invite(requestArguments, *currentClient);
-	else if (requestArguments[0] == "TOPIC" && requestArguments.size() > 1)
-		topic(requestArguments, *currentClient);
-	else if (requestArguments[0] == "PING")
-		pong(requestArguments, *currentClient);
-	return ;
 }

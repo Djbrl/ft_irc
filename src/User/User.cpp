@@ -4,6 +4,9 @@ User::User()
 {
 	_nickname = "";
 	_username = "";
+	_hostname = "";
+	_servername = "";
+	_realname = "";
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
 	_socket = -1;
@@ -69,6 +72,11 @@ std::string					User::getUsername() const
 	return _username;
 }
 
+std::string					User::getRealname() const
+{
+	return _realname;
+}
+
 time_t						User::getLastActiveTime() const
 {
 	return _lastActiveTime;
@@ -81,7 +89,15 @@ int							User::getSocket() const
 
 //SETTERS______________________________________________________________________________________________________
 
-void    User::setNickname(const std::string &name)
+void User::setUserInfo(const std::string &uname, const std::string &hname, const std::string &servername, const std::string &realname)
+{
+	_username = uname;
+	_hostname = hname;
+	_servername = servername;
+	_realname = realname;
+}
+
+void User::setNickname(const std::string &name)
 {
 	_nickname = name;
 }

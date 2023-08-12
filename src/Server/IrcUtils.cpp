@@ -26,7 +26,7 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 {
 	int bytes;
 	int dataSent = 0;
-	int messageLen = strlen(message); //length of the message to be sent
+	int messageLen = strlen(message);
 
 	while (dataSent < messageLen)
 	{
@@ -45,15 +45,6 @@ void    IrcServer::sendWelcomeMessage(int clientSocket)
 	char welcomeMessage[512] = "Welcome to ft_IRC! Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
 	safeSendMessage(clientSocket, welcomeMessage);
 };
-
-void    IrcServer::sendServerResponse(int clientFd, char *message)
-{
-	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-	{
-		if (g_clientSockets[i] == clientFd)
-			_serverResponses[g_clientSockets[i]] = message;
-	}
-}
 
 void    IrcServer::printSocketData(int clientSocket, char* socketData)
 {
@@ -103,14 +94,28 @@ void	IrcServer::updateMemberInChannels(std::string &oldNick, User &target)
 void    IrcServer::clearFdFromList(int clientFd)
 {
 	int j = 0;
+	std::map<std::string, Channel>::iterator	it = _Channels.begin();
+	User										*userToRemove = _ConnectedUsers.getUser(clientFd);
+
+	//REMOVE USER FROM ALL CHANNELS AND USERMAP
+	if (userToRemove != NULL)
+	{
+		while (it != _Channels.end())
+		{
+			if (it->second.hasMember(*userToRemove))
+				it->second.removeMember(*userToRemove);
+			if (it->second.isChannelOp(*userToRemove))
+				it->second.removeOperator(*userToRemove);
+		}
+		_ConnectedUsers.removeUser(clientFd);
+	}
+	//REMOVE FROM FD LISTS
 	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 	{
 		if (clientFd == g_clientSockets[i])
 		{
 			FD_CLR(clientFd, &_clientsFdSet);
 			g_clientSockets.erase(g_clientSockets.begin() + j);
-			_serverResponses.erase(clientFd);
-			this->_ConnectedUsers.removeUser(clientFd);
 			close(clientFd);
 			return ;
 		}
