@@ -340,6 +340,28 @@ void	IrcServer::topic(std::vector<std::string> &requestArguments, User &currentC
 }
 
 
+void	IrcServer::setModes(std::string	&argument, std::map<std::string, Channel>::iterator channel)
+{
+	std::string					sign;
+	std::string					mode;
+	std::vector<std::string>	modesToSet;
+
+
+	sign = argument.substr(0, 1); //first character set as sign
+	for (size_t i = 1, i < argument.size(); i++)
+	{
+		if (argument[i] != '-' && argument[i] != '+')
+		{
+			mode = sign + argument.substr(i, 1);
+			std::cout << "Mode id : " << mode << std::endl;
+			modesToSet.push_back(mode);
+		}
+		else
+			sign = argument.substr(i, 1);
+	}	
+
+}
+
 void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentClient)
 {
 
@@ -348,26 +370,38 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 	{
 		std::map<std::string, Channel>::iterator	isExistingChannel;
 		std::string									channelName = requestArguments[1];
-		
+		bool										isMember;
+
 		//check if channel exists
 		isExistingChannel = _Channels.find(channelName);
 		if (isExistingChannel == _Channels.end())
 		{
-			std::string message = "Sorry, the channel you entered does not exist.\r\n";
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
 			return ; 
 		}
 		else
 		{
-			if (!isExistingChannel->second.isChannelOp(currentClient)) //the user is not channel operator
+			//check if user wanting to perform the change is in channel
+			isMember = isExistingChannel->second.hasMember(currentClient);
+			if (!isMember)
 			{
-	            std::string message = "Sorry, you are not a channel operator. Therefore, you cannot kick a member.\r\n";
-	        	safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
-	        	return ;
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTONCHANNEL(currentClient.getNickname(), channelName).c_str()));
+				return ;
 			}
 			else
 			{
-				//
+				//check if user is channel operator
+				if (!isExistingChannel->second.isChannelOp(currentClient))
+				{
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_CHANOPRIVSNEEDED(currentClient.getNickname(), channelName).c_str()));
+					return ;
+				}
+				else
+				{
+					//Let's perform the needed operations !
+					setModes(requestArguments[2], isExistingChannel);
+
+				}
 
 			}
 		}

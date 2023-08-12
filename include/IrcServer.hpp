@@ -28,10 +28,12 @@ class IrcServer : public AServer
 										IrcServer(const unsigned int& portNumber, const std::string& password);
 										IrcServer(const IrcServer &cpy);
 	IrcServer							&operator=(const IrcServer &cpy);
+	
 	//METHODS__________________________________________________________________________________________________
 	//CONNECTION
 	void								run();
 	int									acceptClient();
+	
 	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
@@ -43,7 +45,8 @@ class IrcServer : public AServer
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
 	void								topic(std::vector<std::string> &requestArguments, User &currentClient);
 	void								mode(std::vector<std::string> &requestArguments, User &currentClient);
-
+	void								setModes(std::string &argument, std::map<std::string, Channel>::iterator channel);
+	
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	
