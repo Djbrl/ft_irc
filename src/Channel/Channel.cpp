@@ -83,6 +83,18 @@ void Channel::addMode(const std::string& mode) {
 	_modesList.push_back(mode);
 }
 
+void Channel::changeMode(const std::string &currentMode, const std::string &newMode)
+{
+	for (std::size_t i = 0; i < this->_modesList.size(); i++)
+	{
+		if (this->_modesList[i] == currentMode)
+		{
+			this->_modesList[i] = newMode;
+			return ;
+		}
+	}
+}
+
 void Channel::removeMode(const std::string& mode) {
 	for (std::vector<std::string>::iterator it = _modesList.begin(); it != _modesList.end(); ++it) {
 		if (*it == mode) {
@@ -166,7 +178,12 @@ void Channel::showMessageHistory(User &target)
 	}
 }
 
+void Channel::removeChannelPassword() {
 
+	if (!this->_channelPassword.empty())
+		this->_channelPassword.clear();
+	return ;	
+}
 
 std::vector<User>::iterator	Channel::isAMember(const std::string &userName) {
 
@@ -192,18 +209,18 @@ std::string	Channel::printMemberList() const
 
 //BOOL_____________________________________________________________________________________________________
 
-bool Channel::hasMember(const User &target) const
+bool	Channel::hasMember(const User &target) const
 {
-	for (std::vector<User>::const_iterator it = _membersList.begin(); it != _membersList.end(); ++it)
+	for (std::size_t i = 0; i < _membersList.size(); i++)
 	{
-		if (*it == target)
+		if (_membersList[i] == target)
 			return (true);
 	}
 	return (false);
 }
 
-bool	Channel::isChannelOp(User &target) {
-
+bool	Channel::isChannelOp(User &target) const
+{
 	for (std::size_t i = 0; i < _operatorsList.size(); i++)
 	{
 		if (_operatorsList[i] == target)
@@ -212,10 +229,25 @@ bool	Channel::isChannelOp(User &target) {
 	return (false);
 }
 
+bool	Channel::findMode(std::string mode) const
+{
+	for (std::size_t i = 0; i < _modesList.size(); i++)
+	{
+		if (_modesList[i] == mode)
+			return (true);
+	}
+	return (false);
+}
+
+
 //GETTERS_____________________________________________________________________________________________________
 
 const std::string &Channel::getChannelName() const {
 	return _channelName;
+}
+
+const std::string &Channel::getChannelPassword() const {
+	return _channelPassword;
 }
 
 const std::string &Channel::getChannelTopic() const {

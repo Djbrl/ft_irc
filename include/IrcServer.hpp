@@ -29,9 +29,11 @@ class IrcServer : public AServer
 	IrcServer							&operator=(const IrcServer &cpy);
 	
 	//METHODS__________________________________________________________________________________________________
+	
 	//CONNECTION
 	void								run();
 	void								acceptClient();
+	
 	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
@@ -47,7 +49,10 @@ class IrcServer : public AServer
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
 	void								topic(std::vector<std::string> &requestArguments, User &currentClient);
 	void								mode(std::vector<std::string> &requestArguments, User &currentClient);
-	void								setModes(std::string &argument, std::map<std::string, Channel>::iterator channel);
+	void								sortModes(std::vector<std::string> &requestArguments, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								compareModes(std::vector<std::string> &requestArguments, std::vector<std::string>	&newModes, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &specialMode, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
 	
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);

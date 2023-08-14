@@ -61,9 +61,9 @@ bool UserMap::removeUser(int socket)
 bool UserMap::userExists(std::string &nickname) {
 
     std::map<std::string, int>::iterator it = this->nickname_to_socket.find(nickname);
-    if (it == this->nickname_to_socket.end())
-        return (false);
-    return (true);
+    if (it != this->nickname_to_socket.end())
+        return (true);
+    return (false);
 }
 
 size_t   UserMap::size() const

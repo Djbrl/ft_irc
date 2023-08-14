@@ -208,23 +208,23 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 		std::vector<User>::iterator					isExistingUser;
 		std::string									channelName = requestArguments[1];
 		std::string									userToRemove = requestArguments[2];
-		
+		bool										isMember;
+
 		//check if channel exists
 		isExistingChannel = _Channels.find(channelName);
 		if (isExistingChannel == _Channels.end())
 		{
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
-			return ; 
+			return ;
 		}
 		else
 		{
-			//check if the user to remove is in the channel
-			isExistingUser = isExistingChannel->second.isAMember(userToRemove);
-			if (isExistingUser == isExistingChannel->second.getMembersList().end())
+			//check if the user kicking is in channel
+			isMember = isExistingChannel->second.hasMember(currentClient);
+			if (!isMember)
 			{
-				std::string message = "Sorry, the user you want to remove is not in the channel.\r\n";
-				safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
-				return ;				
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTONCHANNEL(currentClient.getNickname(), channelName).c_str()));
+				return ;
 			}
 			else
 			{
@@ -236,30 +236,38 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 				}
 				else
 				{
-					isExistingChannel->second.removeMember(*isExistingUser);
-					std::string	messageToKicked;
-					std::string messageToKicker = "User has successfully been removed !\r\n";
-					safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToKicker.c_str()));
-					
-					//send an explanation to the user who has been kicked out
-					if (requestArguments.size() > 3)
+					//check if the user to remove is in the channel
+					isExistingUser = isExistingChannel->second.isAMember(userToRemove);
+					if (isExistingUser != isExistingChannel->second.getMembersList().end())
 					{
-						messageToKicked = "Reason for being kicked, according to Channel Operator ";
-						size_t	found;
-						if ((found = requestArguments[3].find(":")) == std::string::npos)
-							messageToKicked += ":";
-						for (int i = 3; i < (int)requestArguments.size(); i++)
-							messageToKicked += requestArguments[i] + " ";
-						messageToKicked += ".\r\n";
-						safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+						//remove member
+						std::string	messageToKicked;
+						std::string messageToKicker = "User has successfully been removed !\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToKicker.c_str()));
+						
+						//send an explanation to the user who has been kicked out
+						if (requestArguments.size() > 3)
+						{
+							messageToKicked = "Reason for being kicked, according to Channel Operator ";
+							std::size_t	found;
+							if ((found = requestArguments[3].find(":")) == std::string::npos)
+								messageToKicked += ":";
+							for (int i = 3; i < (int)requestArguments.size(); i++)
+								messageToKicked += requestArguments[i] + " ";
+							messageToKicked += ".\r\n";
+							safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+						}
+						else
+						{
+							messageToKicked = "You have been kicked of channel " + requestArguments[1] + " by channel operator.\r\n";
+							safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+						}
+						isExistingChannel->second.removeMember(*isExistingUser);
 					}
-					else
-					{
-						messageToKicked = "You have been kicked of channel " + requestArguments[1] + " by channel operator.\r\n";
-						safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
-					}
-					return ;
+
+
 				}
+
 			}
 		}
 	}
@@ -269,16 +277,6 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 
 void	IrcServer::invite(std::vector<std::string> &requestArguments, User &currentClient)
 {		
-	
-	//NOTES MAY NEED LATER
-		// 	isMember = isExistingChannel->second.hasMember(currentClient); //check if the currenClient is in the channel
-		// 	if (!isMember)
-		// 	{
-		// 		std::string message = "Sorry, you are not member of the channel and therefore cannot invite anyone.\r\n";
-		// 		safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
-		// 		return ;
-		// 	}
-
 	//No need to verify if requestArguments[0] == "INVITE" -> it is done below (HANDLE COMMANDS)
 	if (currentClient.isAuthentificated())
 	{
@@ -286,36 +284,73 @@ void	IrcServer::invite(std::vector<std::string> &requestArguments, User &current
 		std::vector<User>::iterator					isUserToInvite;
 		std::string									userToInvite = requestArguments[1];
 		std::string									channelName = requestArguments[2];
+		bool										isMember;
 
-		//check if userToInvite exists
-		if (!_ConnectedUsers.userExists(userToInvite))
+		//check if channel exists
+		isExistingChannel = _Channels.find(channelName);
+		if (isExistingChannel != _Channels.end())
 		{
-			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHNICK(currentClient.getNickname(), userToInvite).c_str()));
-			return ;
-		}
-		else
-		{
-			isExistingChannel = _Channels.find(channelName); //check if the channel exists just to check if user already is in it !
-			if (isExistingChannel != _Channels.end())
+			//check if the user inviting is in channel
+			isMember = isExistingChannel->second.hasMember(currentClient);
+			if (!isMember)
 			{
-				//check if userToInvite already on channel
-				isUserToInvite = isExistingChannel->second.isAMember(userToInvite);
-				if (isUserToInvite != isExistingChannel->second.getMembersList().end())
-				{
-					safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_USERONCHANNEL(currentClient.getNickname(), userToInvite, channelName).c_str()));
-					return ;
-				}
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTONCHANNEL(currentClient.getNickname(), channelName).c_str()));
+				return ;
 			}
 			else
 			{
-				//STILL NEED TO DO : before removing, check if it is an invite-only channel - if yes, then currenClientmust be a Channel Operator
-				safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_INVITING(currentClient.getNickname(), userToInvite, channelName).c_str()));
-
-				isUserToInvite->setChannelsList(channelName); //add this channel to the channel list the user has been invited to
-				std::string	messageToInvitedUser = currentClient.getNickname() + " invited you to join channel " + requestArguments[2] + ".\r\n";
-				safeSendMessage(_ConnectedUsers.getUser(userToInvite)->getSocket(), const_cast<char*>(messageToInvitedUser.c_str()));
-				return ;
+				//check if userToInvite exists
+				if (!_ConnectedUsers.userExists(userToInvite))
+				{
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHNICK(currentClient.getNickname(), userToInvite).c_str()));
+					return ;
+				}
+				else
+				{
+					//check if userToInvite already on channel
+					isUserToInvite = isExistingChannel->second.isAMember(userToInvite);
+					if (isUserToInvite != isExistingChannel->second.getMembersList().end())
+					{
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_USERONCHANNEL(currentClient.getNickname(), userToInvite, channelName).c_str()));
+						return ;
+					}
+					else
+					{
+						User *invitedUser =  _ConnectedUsers.getUser(userToInvite);
+						//check channel's mode
+						if (isExistingChannel->second.findMode("+i"))
+						{
+							//check that the current user is a channel operator
+							if (!isExistingChannel->second.isChannelOp(currentClient))
+							{
+								safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_CHANOPRIVSNEEDED(currentClient.getNickname(), channelName).c_str()));
+								return ;
+							}
+							else
+							{
+								safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_INVITING(currentClient.getNickname(), userToInvite, channelName).c_str()));
+								invitedUser->setChannelsList(channelName); //add this channel to the channel list the user has been invited to
+								std::string	messageToInvitedUser = currentClient.getNickname() + " invited you to join channel " + requestArguments[2] + ".\r\n";
+								safeSendMessage(invitedUser->getSocket(), const_cast<char*>(messageToInvitedUser.c_str()));
+								return ;
+							}
+						}
+						else
+						{
+							safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_INVITING(currentClient.getNickname(), userToInvite, channelName).c_str()));
+							invitedUser->setChannelsList(channelName); //add this channel to the channel list the user has been invited to
+							std::string	messageToInvitedUser = currentClient.getNickname() + " invited you to join channel " + requestArguments[2] + ".\r\n";
+							safeSendMessage(invitedUser->getSocket(), const_cast<char*>(messageToInvitedUser.c_str()));
+							return ;
+						}
+					}
+				}
 			}
+		}
+		else
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+			return ; 
 		}
 	}
 	else
@@ -330,18 +365,18 @@ void	IrcServer::topic(std::vector<std::string> &requestArguments, User &currentC
 	{
 		std::map<std::string, Channel>::iterator	isExistingChannel;
 		std::string									channelName = requestArguments[1];
+		bool										isMember;
 	
 		//check if channel exists
 		isExistingChannel = _Channels.find(channelName);
 		if (isExistingChannel == _Channels.end())
 		{
-			std::string message = "Sorry, the channel you entered does not exist.\r\n";
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(message.c_str()));
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
 			return ; 
 		}
 		else
 		{
-			//it should just print out the channel's topic if defined
+			//it should just print out the channel's topic, if defined
 			if (requestArguments.size() == 2)
 			{
 				std::string	channelTopic = isExistingChannel->second.getChannelTopic();
@@ -356,39 +391,161 @@ void	IrcServer::topic(std::vector<std::string> &requestArguments, User &currentC
 					return ;
 				}
 			}
-			//it should update the topic, only if the channel mode allows it
-			// else if (requestArguments.size() == 3)
-			// {
-
-			// }
+			//it should update the topic, only if the user is a channel operator and the channel mode allows it
+			if (requestArguments.size() == 3)
+			{
+				//check if user wanting to perform the change is in the channel
+				isMember = isExistingChannel->second.hasMember(currentClient);
+				if (!isMember)
+				{
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTONCHANNEL(currentClient.getNickname(), channelName).c_str()));
+					return ;
+				}
+				else
+				{
+					//check if user is a channel operator
+					if (!isExistingChannel->second.isChannelOp(currentClient))
+					{
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_CHANOPRIVSNEEDED(currentClient.getNickname(), channelName).c_str()));
+						return ;
+					}
+					else
+					{
+						//check if channel mode allows change of topic
+						if (isExistingChannel->second.findMode("+t"))
+						{
+							isExistingChannel->second.setChannelTopic(requestArguments[2]);
+							safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_TOPIC(currentClient.getNickname(), channelName, isExistingChannel->second.getChannelTopic()).c_str()));
+							return ;
+						}
+					}
+				}
+			}
 		}
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-
 }
 
-void	IrcServer::setModes(std::string	&argument, std::map<std::string, Channel>::iterator channel)
+
+void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &mode, std::map<std::string, Channel>::iterator channel, User &currentClient)
+{
+	std::size_t	found_o = mode.find('o');
+	std::size_t	found_k = mode.find('k');
+
+	//either +o, -o, +k, -k
+	if (found_o != std::string::npos || found_k != std::string::npos)
+	{
+		if (requestArguments.size() != 4)
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NEEDMOREPARAMS(currentClient.getNickname(), requestArguments[0]).c_str()));
+			return ;
+		}
+		if (mode == "+o" || mode == "-o")
+		{
+			//check if the fourth argument (aka the user) exists !
+			std::string	userToCheck = requestArguments[3];
+			if (!_ConnectedUsers.userExists(userToCheck))
+			{
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHNICK(currentClient.getNickname(), userToCheck).c_str()));
+				return ;
+			}
+			else
+			{
+				std::vector<User>::iterator newChanOp;
+				newChanOp = channel->second.isAMember(userToCheck);
+				//if the user is in the channel
+				if (mode == "+o" && newChanOp != channel->second.getMembersList().end())
+				{
+						channel->second.addOperator(*newChanOp);
+						return ;
+				}
+				if (mode == "-o" && newChanOp != channel->second.getMembersList().end())
+				{
+						channel->second.removeOperator(*newChanOp);
+						return ;
+				}
+			}
+		}
+		if (mode == "+k" || mode == "-k")
+		{
+			std::string	channelPassword = requestArguments[3];
+			if (mode == "+k")
+			{
+				channel->second.setChannelPassword(channelPassword);
+				//TEST BELOW
+				std::cout << "Channel's password is: " << channel->second.getChannelPassword();
+				return ;
+			}
+			else if (mode == "-k")
+			{
+				channel->second.removeChannelPassword();
+				return ;
+			}
+		}
+	}
+}
+
+int	IrcServer::modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode)
+{
+	for (std::size_t i = 0; i < currentMode.size(); i++)
+	{
+		std::size_t	found = currentMode[i].find(newMode[1]);
+		if (found != std::string::npos)
+		{
+			if (currentMode[i].compare(newMode) != 0) //if currentModes[i] is +i, newModes[y] is -i (are opposite)
+				return (i);
+			else 
+				return (-1); //are the same
+		}
+	}
+	return (-2); //not found, can be added to _modesList
+}
+
+void	IrcServer::compareModes(std::vector<std::string> &requestArguments, std::vector<std::string>	&newModes, std::map<std::string, Channel>::iterator channel, User &currentClient)
+{
+
+	const std::vector<std::string>	&currentModes = channel->second.getModesList();
+	
+	for (size_t j = 0; j < newModes.size(); j++)
+	{
+		int	ret = modeWasFound(currentModes, newModes[j]);
+		//mode was not found in _modesList and must therefore be added
+		if (ret == -2)
+		{
+			dealWithSpecialModes(requestArguments, newModes[j], channel, currentClient); //deal with o and k
+			channel->second.addMode(newModes[j]);			
+		}
+		//the opposite mode of newMdoes[i] was found, need to change !
+		if (ret > -1)
+		{
+			dealWithSpecialModes(requestArguments, newModes[j], channel, currentClient); //deal with o and k
+			channel->second.changeMode(currentModes[ret], newModes[j]); //the mode set is the opposite of the new mode (-i changes to +i)
+		}
+		if (ret == - 1) //special case : no need to add or remove the mode - but need to update
+			dealWithSpecialModes(requestArguments, newModes[j], channel, currentClient);
+	}
+}
+
+void	IrcServer::sortModes(std::vector<std::string> &requestArguments, std::map<std::string, Channel>::iterator channel, User &currentClient)
 {
 	std::string					sign;
 	std::string					mode;
 	std::vector<std::string>	modesToSet;
 
-	(void)channel;
 
-	sign = argument.substr(0, 1); //first character set as sign
-	for (size_t i = 1; i < argument.size(); i++)
+	sign = requestArguments[2].substr(0, 1); //first character set as sign
+	for (std::size_t i = 1; i < requestArguments[2].size(); i++)
 	{
-		if (argument[i] != '-' && argument[i] != '+')
+		if (requestArguments[2][i] != '-' && requestArguments[2][i] != '+')
 		{
-			mode = sign + argument.substr(i, 1);
-			std::cout << "Mode id : " << mode << std::endl;
+			mode = sign + requestArguments[2].substr(i, 1);
 			modesToSet.push_back(mode);
 		}
 		else
-			sign = argument.substr(i, 1);
-	}	
-
+			sign = requestArguments[2].substr(i, 1);
+	}
+	compareModes(requestArguments, modesToSet, channel, currentClient);
 }
 
 void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentClient)
@@ -419,7 +576,7 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 			}
 			else
 			{
-				//check if user is channel operator
+				//check if user is a channel operator
 				if (!isExistingChannel->second.isChannelOp(currentClient))
 				{
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_CHANOPRIVSNEEDED(currentClient.getNickname(), channelName).c_str()));
@@ -428,14 +585,16 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 				else
 				{
 					//Let's perform the needed operations !
-					setModes(requestArguments[2], isExistingChannel);
-
+					sortModes(requestArguments, isExistingChannel, currentClient);				
+					//TEST BELOW
+					// const std::vector<std::string>	&currentModes = isExistingChannel->second.getModesList();
+					// std::cout << "THE MODES ARE : " << std::endl;
+					// for (size_t i  = 0; i < currentModes.size(); i++)
+					// 	std::cout << currentModes[i] << std::endl;
 				}
-
 			}
 		}
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-
 }

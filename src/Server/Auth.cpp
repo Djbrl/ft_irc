@@ -121,7 +121,7 @@ void	IrcServer::user(std::vector<std::string> &requestArguments, User &currentCl
 	{
 		if (requestArguments.size() < 5)
 		{
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(ERR_NEEDMOREPARAMS("USER").c_str()));
+			safeSendMessage(currentClient.getSocket(), const_cast<char*>(ERR_NEEDMOREPARAMS(currentClient.getNickname(), "USER").c_str()));
 			return;
 		}
 		std::string username = requestArguments[1];

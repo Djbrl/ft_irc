@@ -32,6 +32,7 @@ class Channel
 	void								removeMember(User &target);
 	void								updateMemberNickname(std::string &oldNick, User &target);
 	void								addMode(const std::string &mode);
+	void								changeMode(const std::string &currentMode, const std::string &newMode);
 	void								removeMode(const std::string &mode);
 	void								addOperator(User &target);
 	void								removeOperator(User &target);
@@ -39,17 +40,20 @@ class Channel
 	void								sendNoticeToUsers(const std::string &message, const std::string &author);
 	void								addMessageToHistory(const std::string &message);
 	void								showMessageHistory(User &target);
+	void								removeChannelPassword();
 	std::string							printMemberList() const;
 	std::vector<User>::iterator			isAMember(const std::string &name);
 
 	//BOOL__________________________________________________________________________________________________
 
 	bool 								hasMember(const User &target) const;
-	bool								isChannelOp(User &target);
+	bool								isChannelOp(User &target) const;
+	bool								findMode(std::string mode) const;
 
 	//GETTERS__________________________________________________________________________________________________
     
 	const std::string					&getChannelName() const;
+	const std::string					&getChannelPassword() const;
     const std::string					&getChannelTopic() const;
     const User							&getChannelOwner() const;
 	const std::vector<User>				&getMembersList() const;

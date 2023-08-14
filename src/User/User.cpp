@@ -37,6 +37,7 @@ User&	User::operator=(const User &cpy)
 		this->_nickname = cpy._nickname;
 		this->_username = cpy._username;
 		this->_socket = cpy._socket;
+		this->_channelsInvitedTo = cpy._channelsInvitedTo;
 		this->_lastActiveTime = cpy._lastActiveTime;
 		this->_hasPassword = cpy._hasPassword;
 	}
@@ -117,14 +118,14 @@ void	User::setHasPassword(const bool status)
 	this->_hasPassword = status;
 }
 
-void	User::setChannelsList(const std::string &name)
+void	User::setChannelsList(const std::string &channelName)
 {
-	for (size_t i = 0; i < this->_channelsInvitedTo.size(); i++)
+	for (std::size_t i = 0; i < this->_channelsInvitedTo.size(); i++)
 	{
-		if (this->_channelsInvitedTo[i] == name)
+		if (this->_channelsInvitedTo[i] == channelName)
 			return ; //channel is already in the vector
 	}
-	this->_channelsInvitedTo.push_back(name);
+	this->_channelsInvitedTo.push_back(channelName);
 }
 
 //BOOLEAN__________________________________________________________________________________________________

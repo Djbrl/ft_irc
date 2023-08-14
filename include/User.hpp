@@ -47,7 +47,7 @@ class User
 	void							setUsername(const std::string &uname);
 	void							setHasPassword(const bool state);
 	void							setSocket(const int socket_fd);
-	void							setChannelsList(const std::string &name);
+	void							setChannelsList(const std::string &channelName);
 
 	//BOOLEAN__________________________________________________________________________________________________
 
