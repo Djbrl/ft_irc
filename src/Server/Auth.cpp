@@ -169,7 +169,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		nick(requestArguments, *currentClient);
 	else if (requestArguments[0] == "USER")
 		user(requestArguments, *currentClient);
-	else if (requestArguments[0] == "JOIN")
+	else if (requestArguments[0] == "JOIN" && requestArguments.size() > 1)
 		join(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PART")
 		part(requestArguments, *currentClient);
