@@ -62,10 +62,12 @@ void    IrcServer::addChannel(const std::string &channelName, User &owner)
 	std::map<std::string, Channel>::iterator it = _Channels.begin();
 	if (channelName.empty())
 		return ;
+
 	while (it != _Channels.end())
 	{
 		if (it->first == channelName)
 			return ;
+		it++;
 	}
 	_Channels[channelName] = Channel(channelName, owner);
 }
@@ -106,6 +108,7 @@ void    IrcServer::clearFdFromList(int clientFd)
 				it->second.removeMember(*userToRemove);
 			if (it->second.isChannelOp(*userToRemove))
 				it->second.removeOperator(*userToRemove);
+			it++;
 		}
 		_ConnectedUsers.removeUser(clientFd);
 	}
