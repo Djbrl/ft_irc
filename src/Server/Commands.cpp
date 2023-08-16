@@ -178,7 +178,7 @@ void IrcServer::part(std::vector<std::string> &requestArguments, User &currentCl
 	if (requestArguments[0] == "PART" && currentClient.isAuthentificated())
 	{
 		std::string	channelName = requestArguments[1];
-		bool		isValidChannelName = channelName.size() > 1 && channelName[0] == '#';
+		bool		isValidChannelName = channelName.size() > 1 && (channelName[0] == '#' || channelName[0] == '&');
 		
 		if (isValidChannelName || _Channels.find(channelName) != _Channels.end())
 		{
@@ -229,7 +229,7 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 		//SEND RESPONSE TO IRSSI
 		std::string	channelName = requestArguments[1];
 		Channel 	channel = _Channels[requestArguments[1]];
-		if (channelName.size() > 1 && channelName[0] == '#')
+		if (channelName.size() > 1 && (channelName[0] == '#' || channelName[0] == '&'))
 		{
 			std::string userList = channel.printMemberList();
 			std::string whoIsResponse = ":ft_irc 352 " + currentClient.getNickname() + " " + channelName + " " + \
@@ -260,7 +260,7 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
 		
-		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
+		bool isChannelName = requestArguments[1].size() > 1 && (requestArguments[1][0] == '#' || requestArguments[1][0] == '&');
 		//SEND TO CHANNEL
 		if (isChannelName)
 		{
@@ -299,7 +299,7 @@ void	IrcServer::notice(std::vector<std::string> &requestArguments, User &current
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
 		
-		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
+		bool isChannelName = requestArguments[1].size() > 1 && (requestArguments[1][0] == '#' || requestArguments[1][0] == '&');
 		if (isChannelName)
 		{
 			isExistingChannel = _Channels.find(channelName);
