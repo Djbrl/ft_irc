@@ -7,7 +7,10 @@ Channel::~Channel()
 {}
 
 Channel::Channel(const std::string &name, User &owner) : _channelName(name), _channelOwner(owner)
-{}
+{
+	this->_operatorsList.push_back(owner); //add the creator of the channel to the operators list
+	this->_membersList.push_back(owner);
+}
 
 Channel::Channel(const Channel &cpy)
 {
@@ -32,66 +35,126 @@ Channel& Channel::operator=(const Channel &cpy)
 
 //METHODS_____________________________________________________________________________________________________
 
-void Channel::addMember(User& target) {
+void Channel::addMember(User& target)
+{
+	if (hasMember(target))
+		return ;
 	_membersList.push_back(target);
 }
 
+void Channel::removeMember(User& target)
+{
+	for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it)
+	{
+		if (*it == target)
+		{
+			_membersList.erase(it);
+			break ;
+		}
+	}
+}
 
-void Channel::removeMember(User& target) {
-    for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
-        if (*it == target) {
-            _membersList.erase(it);
-            break ;
-        }
-    }
+void Channel::updateMemberNickname(std::string &oldNick, User &target)
+{
+	if (_channelOwner.getNickname() == oldNick)
+		_channelOwner = target;
+	//UPDATE IN MEMBER LIST
+	for (size_t i = 0; i < _membersList.size(); i++)
+	{
+		if (_membersList[i].getNickname() == oldNick)
+		{
+			_membersList[i] = target;
+			return ;
+		}
+	}
+	//UPDATE IN OPERATOR LIST
+	for (size_t i = 0; i < _operatorsList.size(); i++)
+	{
+		if (_operatorsList[i].getNickname() == oldNick)
+		{
+			_operatorsList[i] = target;
+			return ;
+		}
+	}
+	return ;
 }
 
 void Channel::addMode(const std::string& mode) {
 	_modesList.push_back(mode);
 }
 
+void Channel::changeMode(const std::string &currentMode, const std::string &newMode)
+{
+	for (std::size_t i = 0; i < this->_modesList.size(); i++)
+	{
+		if (this->_modesList[i] == currentMode)
+		{
+			this->_modesList[i] = newMode;
+			return ;
+		}
+	}
+}
+
 void Channel::removeMode(const std::string& mode) {
-    for (std::vector<std::string>::iterator it = _modesList.begin(); it != _modesList.end(); ++it) {
-        if (*it == mode) {
-            _modesList.erase(it);
-            break ;
-        }
-    }
+	for (std::vector<std::string>::iterator it = _modesList.begin(); it != _modesList.end(); ++it) {
+		if (*it == mode) {
+			_modesList.erase(it);
+			break ;
+		}
+	}
 }
 void Channel::addOperator(User& target) {
 	_operatorsList.push_back(target);
 }
 
 void Channel::removeOperator(User& target) {
-    for (std::vector<User>::iterator it = _operatorsList.begin(); it != _operatorsList.end(); ++it) {
-        if (*it == target) {
-            _operatorsList.erase(it);
-            break ;
-        }
-    }
+	for (std::vector<User>::iterator it = _operatorsList.begin(); it != _operatorsList.end(); ++it) {
+		if (*it == target) {
+			_operatorsList.erase(it);
+			break ;
+		}
+	}
 }
 
-void Channel::sendMessageToUsers(const std::string &text, const std::string &author)
+void Channel::sendMessageToUsers(const std::string &messageToChannel, const std::string &author)
 {
-	std::string message = author + ": " + text + "\r\n";
-	int bytes;
-	int dataSent = 0;
-	int messageLen = strlen(message.c_str());
-	for (int i = 0; i < (int)_membersList.size(); i++)
+	std::string message = ":" + author + " PRIVMSG " + _channelName + " :" + messageToChannel + "\r\n";
+
+	for (size_t i = 0; i < _membersList.size(); i++)
 	{
-		dataSent = 0;
-		while (dataSent < messageLen)
+		if (_membersList[i].getNickname() != author)
 		{
-			if ((bytes = send(_membersList[i].getSocket(), message.c_str() + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
+			int bytes = send(_membersList[i].getSocket(), message.c_str(), message.size(), MSG_DONTWAIT); 
+			if (bytes <= 0)
 			{
-				std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":"<< _membersList[i].getSocket() << std::endl;
-				return ;
+				std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
+				continue ;
 			}
-			dataSent += bytes;
+			usleep(50000);
 		}
-		addMessageToHistory(message);
 	}
-	return ;
+	addMessageToHistory(message);
+	return;
+}
+
+void Channel::sendNoticeToUsers(const std::string &noticeToChannel, const std::string &author)
+{
+	std::string noticeMessage = "NOTICE " + author + " :" + noticeToChannel + "\r\n";
+
+	for (size_t i = 0; i < _membersList.size(); i++)
+	{
+		if (_membersList[i].getNickname() != author)
+		{
+			int bytes = send(_membersList[i].getSocket(), noticeToChannel.c_str(), noticeToChannel.size(), MSG_DONTWAIT);
+			if (bytes <= 0)
+			{
+				std::cout << "Error: Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
+				continue;
+			}
+			usleep(50000);
+		}
+	}
+	return;
 }
 
 void Channel::addMessageToHistory(const std::string &message)
@@ -99,10 +162,92 @@ void Channel::addMessageToHistory(const std::string &message)
 	_messageHistory.push_back(message);
 }
 
+void Channel::showMessageHistory(User &target)
+{
+	std::string	message = "";
+	int			messageLen = 0;
+
+	for (int i = 0; i < (int)_messageHistory.size(); i++)
+		message += _messageHistory[i] + "\r\n";
+	messageLen = message.size();
+	int bytesSent = send(target.getSocket(), message.c_str(), messageLen, MSG_DONTWAIT);        
+	if (bytesSent == -1 || bytesSent < (int)message.size())
+	{
+		std::cout << "Error: Couldn't send data to client." << target.getNickname() << ":" << target.getSocket() << std::endl;
+		return;
+	}
+}
+
+void Channel::removeChannelPassword() {
+
+	if (!this->_channelPassword.empty())
+		this->_channelPassword.clear();
+	return ;	
+}
+
+std::vector<User>::iterator	Channel::isAMember(const std::string &userName) {
+
+	for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
+		if (it->getNickname() == userName) {	
+			return (it);
+		}
+	}
+	return (_membersList.end());
+}
+
+std::string	Channel::printMemberList() const
+{
+	std::string	memberList;
+	for (size_t i = 0; i < _membersList.size(); i++)
+	{
+		memberList += _membersList[i].getNickname();
+		if(i + 1 < _membersList.size())
+			memberList += ",";
+	}
+	return memberList;
+}
+
+//BOOL_____________________________________________________________________________________________________
+
+bool	Channel::hasMember(const User &target) const
+{
+	for (std::size_t i = 0; i < _membersList.size(); i++)
+	{
+		if (_membersList[i] == target)
+			return (true);
+	}
+	return (false);
+}
+
+bool	Channel::isChannelOp(User &target) const
+{
+	for (std::size_t i = 0; i < _operatorsList.size(); i++)
+	{
+		if (_operatorsList[i] == target)
+			return (true);
+	}
+	return (false);
+}
+
+bool	Channel::findMode(std::string mode) const
+{
+	for (std::size_t i = 0; i < _modesList.size(); i++)
+	{
+		if (_modesList[i] == mode)
+			return (true);
+	}
+	return (false);
+}
+
+
 //GETTERS_____________________________________________________________________________________________________
 
 const std::string &Channel::getChannelName() const {
 	return _channelName;
+}
+
+const std::string &Channel::getChannelPassword() const {
+	return _channelPassword;
 }
 
 const std::string &Channel::getChannelTopic() const {
@@ -167,6 +312,15 @@ std::ostream    &operator<<(std::ostream &flux, const Channel& rhs)
 	{
 		flux << rhs.getModesList()[i];
 		if (i < rhs.getModesList().size() - 1)
+			flux << ", ";
+	}
+	flux << std::endl;
+
+	flux << "Message History: ";
+	for (size_t i = 0; i < rhs.getMessageHistory().size(); ++i)
+	{
+		flux << rhs.getMessageHistory()[i];
+		if (i < rhs.getMessageHistory().size() - 1)
 			flux << ", ";
 	}
 	flux << std::endl;

@@ -53,9 +53,44 @@ bool UserMap::removeUser(int socket)
 {
     User *user = getUser(socket);
     if (!user)
-        return false;
+        return (false);
     this->nickname_to_socket.erase(user->getNickname());
     return (this->socket_to_user.erase(socket));
+}
+
+bool UserMap::userExists(std::string &nickname) {
+
+    std::map<std::string, int>::iterator it = this->nickname_to_socket.find(nickname);
+    if (it != this->nickname_to_socket.end())
+        return (true);
+    return (false);
+}
+
+size_t   UserMap::size() const
+{
+    return nickname_to_socket.size();
+}
+
+User    *UserMap::updateUser(std::string &oldNick, std::string &newNick)
+{
+    std::map<std::string, int>::iterator it = nickname_to_socket.begin();
+    int                                  socket = -1;
+    while (it != nickname_to_socket.end())
+    {
+        if (it->first == oldNick)
+        {
+            socket = it->second;
+            nickname_to_socket[newNick] = socket;
+            socket_to_user[socket].setNickname(newNick);
+        }
+        it++;
+    }
+    if (socket != -1)
+    {
+        nickname_to_socket.erase(oldNick);
+        return getUser(socket);
+    }
+    return NULL;
 }
 
 UserMap::UserMap()

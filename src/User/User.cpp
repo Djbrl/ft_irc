@@ -4,6 +4,9 @@ User::User()
 {
 	_nickname = "";
 	_username = "";
+	_hostname = "";
+	_servername = "";
+	_realname = "";
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
 	_socket = -1;
@@ -34,8 +37,9 @@ User&	User::operator=(const User &cpy)
 		this->_nickname = cpy._nickname;
 		this->_username = cpy._username;
 		this->_socket = cpy._socket;
+		this->_channelsInvitedTo = cpy._channelsInvitedTo;
 		this->_lastActiveTime = cpy._lastActiveTime;
-		this->_hasPassword = cpy._socket;
+		this->_hasPassword = cpy._hasPassword;
 	}
 	return *this;
 }
@@ -69,6 +73,11 @@ std::string					User::getUsername() const
 	return _username;
 }
 
+std::string					User::getRealname() const
+{
+	return _realname;
+}
+
 time_t						User::getLastActiveTime() const
 {
 	return _lastActiveTime;
@@ -81,7 +90,15 @@ int							User::getSocket() const
 
 //SETTERS______________________________________________________________________________________________________
 
-void    User::setNickname(const std::string &name)
+void User::setUserInfo(const std::string &uname, const std::string &hname, const std::string &servername, const std::string &realname)
+{
+	_username = uname;
+	_hostname = hname;
+	_servername = servername;
+	_realname = realname;
+}
+
+void User::setNickname(const std::string &name)
 {
 	_nickname = name;
 }
@@ -99,6 +116,28 @@ void	User::setSocket(const int socket_fd)
 void	User::setHasPassword(const bool status)
 {
 	this->_hasPassword = status;
+}
+
+void	User::setChannelsList(const std::string &channelName)
+{
+	for (std::size_t i = 0; i < this->_channelsInvitedTo.size(); i++)
+	{
+		if (this->_channelsInvitedTo[i] == channelName)
+			return ; //channel is already in the vector
+	}
+	this->_channelsInvitedTo.push_back(channelName);
+}
+
+//BOOLEAN__________________________________________________________________________________________________
+
+bool	User::channelIsInList(const std::string &name)
+{
+	for (size_t i = 0; i < this->_channelsInvitedTo.size(); i++)
+	{
+		if (this->_channelsInvitedTo[i] == name)
+			return (true);
+	}
+	return (false);
 }
 
 //EXTERN OPERATORS_____________________________________________________________________________________________

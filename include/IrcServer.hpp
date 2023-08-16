@@ -18,7 +18,7 @@ class IrcServer : public AServer
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
 	sockaddr_in_t						_serverSockAddr;
-	std::map<int, std::string>			_serverResponses;
+	time_t								_serverCreationDate;
 	std::map<std::string, Channel>		_Channels;
 	fd_set								_clientsFdSet;
 	UserMap							    _ConnectedUsers;
@@ -28,16 +28,37 @@ class IrcServer : public AServer
 										IrcServer(const unsigned int& portNumber, const std::string& password);
 										IrcServer(const IrcServer &cpy);
 	IrcServer							&operator=(const IrcServer &cpy);
+	
 	//METHODS__________________________________________________________________________________________________
+	
 	//CONNECTION
 	void								run();
-	int									acceptClient();
+	void								acceptClient();
+	
+	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
-
-
+	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
+	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
+	void								user(std::vector<std::string> &requestArguments, User &currentClient);
+	void								join(std::vector<std::string> &requestArguments, User &currentClient);
+	void								part(std::vector<std::string> &requestArguments, User &currentClient);
+	void								who(std::vector<std::string> &requestArguments, User &currentClient);
+	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
+	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
+	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
+	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
+	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
+	void								topic(std::vector<std::string> &requestArguments, User &currentClient);
+	void								mode(std::vector<std::string> &requestArguments, User &currentClient);
+	void								sortModes(std::vector<std::string> &requestArguments, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								compareModes(std::vector<std::string> &requestArguments, std::vector<std::string>	&newModes, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &specialMode, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
+	
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
-	void								removeChannel(const std::string &channelName);
+	void								removeChannel(const std::string &channelName);	
+	void								updateMemberInChannels(std::string &oldNick, User &target);
 
 	//PARSING
 	void								parseQuery(int clientFd, std::string clientQuery);
@@ -48,10 +69,11 @@ class IrcServer : public AServer
 	//PROCESS
 	void								sendWelcomeMessage(int clientSocket);
 	void   								safeSendMessage(int targeted_client, char *msg);
-	void   								sendServerResponse(int sender_fd, char *msg);
 	void								handleRequest(int clientFd);
 	
 	//UTILS
+	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
+	void								handleCAPLS(int clientFd);
 	void    							clearFdFromList(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________

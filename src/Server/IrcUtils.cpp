@@ -2,11 +2,31 @@
 
 //MESSAGES___________________________________________________________________________________________________________
 
+std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketData)
+{
+    std::vector<std::string> result;
+
+    size_t startPos = 0;
+    size_t delimiterPos = socketData.find("\r\n");
+
+    while (delimiterPos != std::string::npos)
+	{
+        result.push_back(socketData.substr(startPos, delimiterPos - startPos));
+        startPos = delimiterPos + 2;
+        delimiterPos = socketData.find("\r\n", startPos);
+    }
+    if (startPos < socketData.length())
+	{
+        result.push_back(socketData.substr(startPos));
+    }
+    return result;
+}
+
 void    IrcServer::safeSendMessage(int clientFd, char *message)
 {
 	int bytes;
 	int dataSent = 0;
-	int messageLen = strlen(message); //length of the message to be sent
+	int messageLen = strlen(message);
 
 	while (dataSent < messageLen)
 	{
@@ -26,15 +46,6 @@ void    IrcServer::sendWelcomeMessage(int clientSocket)
 	safeSendMessage(clientSocket, welcomeMessage);
 };
 
-void    IrcServer::sendServerResponse(int clientFd, char *message)
-{
-	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-	{
-		if (g_clientSockets[i] == clientFd)
-			_serverResponses[g_clientSockets[i]] = message;
-	}
-}
-
 void    IrcServer::printSocketData(int clientSocket, char* socketData)
 {
 	std::string	clientIP;
@@ -48,10 +59,15 @@ void    IrcServer::printSocketData(int clientSocket, char* socketData)
 
 void    IrcServer::addChannel(const std::string &channelName, User &owner)
 {
+	std::map<std::string, Channel>::iterator it = _Channels.begin();
 	if (channelName.empty())
 		return ;
-	if (_Channels.find(channelName) == _Channels.end())
-		_Channels[channelName] = Channel(channelName, owner);
+	while (it != _Channels.end())
+	{
+		if (it->first == channelName)
+			return ;
+	}
+	_Channels[channelName] = Channel(channelName, owner);
 }
 
 void    IrcServer::removeChannel(const std::string &channelName)
@@ -62,19 +78,44 @@ void    IrcServer::removeChannel(const std::string &channelName)
 		_Channels.erase(channelName);
 }
 
+void	IrcServer::updateMemberInChannels(std::string &oldNick, User &target)
+{
+	std::map<std::string, Channel>::iterator it = _Channels.begin();
+
+	while (it != _Channels.end())
+	{
+		it->second.updateMemberNickname(oldNick, target);
+		it++;
+	}
+}
+
 //CLEAN UP___________________________________________________________________________________________________________
 
 void    IrcServer::clearFdFromList(int clientFd)
 {
 	int j = 0;
+	std::map<std::string, Channel>::iterator	it = _Channels.begin();
+	User										*userToRemove = _ConnectedUsers.getUser(clientFd);
+
+	//REMOVE USER FROM ALL CHANNELS AND USERMAP
+	if (userToRemove != NULL)
+	{
+		while (it != _Channels.end())
+		{
+			if (it->second.hasMember(*userToRemove))
+				it->second.removeMember(*userToRemove);
+			if (it->second.isChannelOp(*userToRemove))
+				it->second.removeOperator(*userToRemove);
+		}
+		_ConnectedUsers.removeUser(clientFd);
+	}
+	//REMOVE FROM FD LISTS
 	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 	{
 		if (clientFd == g_clientSockets[i])
 		{
 			FD_CLR(clientFd, &_clientsFdSet);
 			g_clientSockets.erase(g_clientSockets.begin() + j);
-			_serverResponses.erase(clientFd);
-			this->_ConnectedUsers.removeUser(clientFd);
 			close(clientFd);
 			return ;
 		}
