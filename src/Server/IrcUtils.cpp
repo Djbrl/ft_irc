@@ -42,7 +42,7 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 
 void    IrcServer::sendWelcomeMessage(int clientSocket)
 {
-	char welcomeMessage[512] = "Welcome to ft_IRC! Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
+	char welcomeMessage[512] = "You have successfully connected to ft_IRC! Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
 	safeSendMessage(clientSocket, welcomeMessage);
 };
 

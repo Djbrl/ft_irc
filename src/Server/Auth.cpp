@@ -1,5 +1,12 @@
 #include "IrcServer.hpp"
 
+void	IrcServer::capls(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	(void)requestArguments;
+	std::string CAPLS = "CAP * LS :PASS NICK JOIN PRIVMSG NOTICE KICK INVITE MODE PONG\r\n";
+	safeSendMessage(currentClient.getSocket(), const_cast<char *>(CAPLS.c_str()));	
+}
+
 void	IrcServer::pass(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	if (requestArguments[0] == "PASS" && !currentClient.hasPassword())
@@ -14,27 +21,6 @@ void	IrcServer::pass(std::vector<std::string> &requestArguments, User &currentCl
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_PASSACCEPTED(currentClient.getNickname()).c_str()));
-	return ;
-}
-
-void	IrcServer::handleCAPLS(int clientFd)
-{
-	std::vector<std::string>	request;
-	std::stringstream			requestSplit;
-	std::string					word;
-	char						buf[MESSAGE_BUFFER_SIZE];
-
-	recv(clientFd, buf, MESSAGE_BUFFER_SIZE, 0);
-	request = splitStringByCRLF(std::string(buf));
-	requestSplit << request[0];
-	requestSplit >> word;
-	if (word == "CAP")
-	{
-		std::string CAPLS = "CAP * LS :PASS NICK JOIN PRIVMSG NOTICE KICK INVITE MODE PONG\r\n";
-		safeSendMessage(clientFd, const_cast<char *>(CAPLS.c_str()));	
-	}
-	else
-		sendWelcomeMessage(clientFd);
 	return ;
 }
 
@@ -156,7 +142,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	if (requestArguments.size() < 2)
 		return ;
 	//RETURN IF PASS ISNT VALIDATED YET
-	if (requestArguments[0] != "PASS" && !currentClient->hasPassword())
+	if ((requestArguments[0] != "PASS" && !currentClient->hasPassword()) && requestArguments[0] != "CAP")
 	{
 		safeSendMessage(currentClient->getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient->getNickname()).c_str()));
 		return ;
@@ -189,5 +175,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		topic(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PING")
 		pong(requestArguments, *currentClient);
+	else if (requestArguments[0] == "CAP" && requestArguments[1] == "LS" && requestArguments[1] == "302")
+		capls(requestArguments, *currentClient);
 	return ;
 }

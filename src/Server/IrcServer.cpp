@@ -126,8 +126,8 @@ void	IrcServer::acceptClient()
 		g_clientSockets.push_back(dataSocketFd);
 		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
 		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BWHITE << clientIP << RESET << "." << std::endl;
-		handleCAPLS(dataSocketFd);
 		_ConnectedUsers.addUser(dataSocketFd);
+		sendWelcomeMessage(dataSocketFd);
 	}
 	catch (const AcceptException& e)
 	{
