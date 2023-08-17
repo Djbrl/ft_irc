@@ -53,8 +53,12 @@ class IrcServer : public AServer
 	void								sortModes(std::vector<std::string> &requestArguments, std::map<std::string, Channel>::iterator channel, User &currentClient);
 	void								compareModes(std::vector<std::string> &requestArguments, std::vector<std::string>	&newModes, std::map<std::string, Channel>::iterator channel, User &currentClient);
 	void								dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &specialMode, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								createChannel(const std::string &channelName, User &currentClient);
+	void								joinChannel(const std::string &channelName, User &currentClient);
 	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
-	
+	int									checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient);
+	std::vector<std::string>			splitJoinArgument(std::string &argument);
+	std::vector<std::string>			parseChannels(std::vector<std::string> channels, User &currentClient);
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	

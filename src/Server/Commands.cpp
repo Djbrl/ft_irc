@@ -1,58 +1,226 @@
 #include "IrcServer.hpp"
 
-void IrcServer::join(std::vector<std::string> &requestArguments, User &currentClient)
+std::vector<std::string>	IrcServer::splitJoinArgument(std::string &argument)
 {
-	if (requestArguments[0] == "JOIN" && currentClient.isAuthentificated())
-	{
-		bool isValidChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
-		if (isValidChannelName)
-		{
-			std::map<std::string, Channel>::iterator	isExistingChannel;
-			std::string									channelName = requestArguments[1];
+	std::vector<std::string>	splitArgument;
+	std::string					subString;
 
-			//NEW CHANNEL
-			isExistingChannel = _Channels.find(channelName);
-			if (isExistingChannel == _Channels.end())
+	std::size_t argumentLen = argument.size(); //size of the argument I receive
+	std::size_t start = 0;
+	std::size_t end, found;
+
+	found = argument.find(',');
+	while (found != std::string::npos && found != (argumentLen - 1))
+	{
+		end = found;
+		subString = argument.substr(start, end - start);
+		splitArgument.push_back(subString);
+		start = found + 1;
+		//find the next occurrence of , in the argument
+		found = argument.find(',', start);
+	}
+	if (found == std::string::npos || found == (argumentLen - 1))
+	{
+		if (found == argumentLen - 1)
+			subString = argument.substr(start, (argumentLen - 1) - start);
+		else
+			subString = argument.substr(start, argumentLen - start);
+		splitArgument.push_back(subString);
+	}
+	return (splitArgument);
+}
+
+std::vector<std::string>	IrcServer::parseChannels(std::vector<std::string> channels, User &currentClient)
+{
+	std::vector<std::string>	validChannels;
+
+	for (std::size_t i = 0; i < channels.size(); i++)
+	{
+		//check if channel's name is valid
+		if (channels[i].size() < 2 || (channels[i][0] != '#' && channels[i][0] != '&'))
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channels[i]).c_str()));
+		else
+			validChannels.push_back(channels[i]);
+	}
+	return (validChannels);
+}
+
+
+void	IrcServer::createChannel(const std::string &channelName, User &currentClient)
+{
+	std::cout << "Channel does not exist" << std::endl;
+	addChannel(channelName, currentClient);
+	std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic()) + 
+								RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList()) + 
+								RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
+	safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
+}
+
+void	IrcServer::joinChannel(const std::string &channelName, User &currentClient)
+{
+	std::cout << "Channel already exists" << std::endl;
+	if (_Channels[channelName].hasMember(currentClient))
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_ALREADYREGISTRED(currentClient.getNickname(), channelName).c_str()));
+	else
+	{
+		std::string notification = "joined the channel";
+		_Channels[channelName].sendMessageToUsers(notification, currentClient.getNickname());
+		_Channels[channelName].addMember(currentClient);
+		std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ 
+									RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ 
+									RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
+		usleep(50000);
+		_Channels[channelName].showMessageHistory(currentClient);
+	}
+}
+
+int	IrcServer::checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient)
+{
+	std::string channelName = channel->second.getChannelName();
+	
+	//Look for +i in channel's mode
+	if (channel->second.findMode("+i"))
+	{
+		//check if client has been invited !
+		if (!currentClient.channelIsInList(channelName))
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_INVITEONLYCHAN(channelName).c_str()));
+			return (-1); //cannot join this channel
+		}
+	}
+	std::string	password = channel->second.getChannelPassword();
+	if (!password.empty())
+	{
+		//if the user entered a password - check it is the write password
+		if (channelIndex < passwords.size())
+		{
+			if(password != passwords[channelIndex])
 			{
-				addChannel(channelName, currentClient);
-				std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ \
-											RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ \
-											RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
-				safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_BADCHANNELKEY(channelName).c_str()));
+				return (-1);
 			}
-			//EXISTING CHANNEL
 			else
-			{
-				if (_Channels[channelName].hasMember(currentClient))
-					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_ALREADYREGISTRED(currentClient.getNickname(), requestArguments[1]).c_str()));
-				else
-				{
-					std::string notification = "joined the channel";
-					_Channels[channelName].sendMessageToUsers(notification, currentClient.getNickname());
-					_Channels[channelName].addMember(currentClient);
-					std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ \
-												RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ \
-												RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
-					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
-					usleep(50000);
-					_Channels[channelName].showMessageHistory(currentClient);
-				}
-			}
+				return (0);
 		}
 		else
-			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_BADCHANNELKEY(channelName).c_str()));
+			return (-1);
+		}
+	}
+	return (0); //user can join the channel
+}
+
+void IrcServer::join(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	std::vector<std::string>	channels;
+	std::vector<std::string>	passwords;
+
+	if (currentClient.isAuthentificated())
+	{
+		//get all channels
+		channels = splitJoinArgument(requestArguments[1]);
+
+		//time to check if channels are valid in themselves
+		std::vector<std::string>	validChannels;
+		if ((validChannels = parseChannels(channels, currentClient)).empty())
+			return ;
+		//if validChannels is not empty, this means that at least one channel is valid
+		else
+		{
+			//if password is empty, it means that no password has been provided
+			if (requestArguments.size() == 3)
+			{
+				//get all passwords (if there are any)
+				passwords = splitJoinArgument(requestArguments[2]);
+			}
+			for (std::size_t i = 0; i < validChannels.size(); i++)
+			{
+				std::string									channelName;
+				std::map<std::string, Channel>::iterator	isExistingChannel;
+
+				channelName = validChannels[i];
+				isExistingChannel = _Channels.find(channelName);
+				
+				//option 1: the channel does not exist
+				if (isExistingChannel == _Channels.end())
+					createChannel(channelName, currentClient);
+				//option 2: the channel exists
+				else
+				{
+					int retCheck = checkChannelExceptions(isExistingChannel, passwords, i, currentClient);
+					//if all conditions are met, then it is possible to join channel
+					if (retCheck == 0)
+						joinChannel(channelName, currentClient);
+				}
+			}
+
+		}
+
+		//TEST channel
+			for (std::size_t i = 0; i < validChannels.size(); i++)
+				std::cout << "CHAN is : " << validChannels[i] << std::endl;
+
+		//TEST password
+			for (std::size_t i = 0; i < passwords.size(); i++)
+				std::cout << "PASS is : " << passwords[i] << std::endl;
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-	return ;
-}
+}	
+	
+// 	if (requestArguments[0] == "JOIN" && currentClient.isAuthentificated())
+// 	{
+// 		bool isValidChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
+// 		if (isValidChannelName)
+// 		{
+// 			std::map<std::string, Channel>::iterator	isExistingChannel;
+// 			std::string									channelName = requestArguments[1];
+
+// 			//NEW CHANNEL
+// 			isExistingChannel = _Channels.find(channelName);
+// 			if (isExistingChannel == _Channels.end())
+// 			{
+// 				addChannel(channelName, currentClient);
+// 				std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ 
+// 											RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ 
+// 											RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
+// 				safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
+// 			}
+// 			//EXISTING CHANNEL
+// 			else
+// 			{
+// 				if (_Channels[channelName].hasMember(currentClient))
+// 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_ALREADYREGISTRED(currentClient.getNickname(), requestArguments[1]).c_str()));
+// 				else
+// 				{
+// 					std::string notification = "joined the channel";
+// 					_Channels[channelName].sendMessageToUsers(notification, currentClient.getNickname());
+// 					_Channels[channelName].addMember(currentClient);
+// 					std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ 
+// 												RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ 
+// 												RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
+// 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
+// 					usleep(50000);
+// 					_Channels[channelName].showMessageHistory(currentClient);
+// 				}
+// 			}
+// 		}
+// 		else
+// 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
+// 	}
+// 	else
+// 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+// 	return ;
+// }
 
 void IrcServer::part(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	if (requestArguments[0] == "PART" && currentClient.isAuthentificated())
 	{
 		std::string	channelName = requestArguments[1];
-		bool		isValidChannelName = channelName.size() > 1 && channelName[0] == '#';
+		bool		isValidChannelName = channelName.size() > 1 && (channelName[0] == '#' || channelName[0] == '&');
 		
 		if (isValidChannelName || _Channels.find(channelName) != _Channels.end())
 		{
@@ -103,7 +271,7 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 		//SEND RESPONSE TO IRSSI
 		std::string	channelName = requestArguments[1];
 		Channel 	channel = _Channels[requestArguments[1]];
-		if (channelName.size() > 1 && channelName[0] == '#')
+		if (channelName.size() > 1 && (channelName[0] == '#' || channelName[0] == '&'))
 		{
 			std::string userList = channel.printMemberList();
 			std::string whoIsResponse = ":ft_irc 352 " + currentClient.getNickname() + " " + channelName + " " + \
@@ -134,7 +302,7 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
 		
-		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
+		bool isChannelName = requestArguments[1].size() > 1 && (requestArguments[1][0] == '#' || requestArguments[1][0] == '&');
 		//SEND TO CHANNEL
 		if (isChannelName)
 		{
@@ -173,7 +341,7 @@ void	IrcServer::notice(std::vector<std::string> &requestArguments, User &current
 		for (int i = 2; i < (int)requestArguments.size(); i++)
 			messageToChannel += requestArguments[i] + " ";
 		
-		bool isChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
+		bool isChannelName = requestArguments[1].size() > 1 && (requestArguments[1][0] == '#' || requestArguments[1][0] == '&');
 		if (isChannelName)
 		{
 			isExistingChannel = _Channels.find(channelName);
