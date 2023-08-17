@@ -141,17 +141,13 @@ void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentCl
 }
 
 
-void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *socketData)
+void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::vector<std::string> requestArguments)
 {
-	std::vector<std::string> 	requestArguments;
-	std::stringstream			request(socketData);
 	std::string					argument;
 	User						*currentClient;
 
 	currentClient = _ConnectedUsers.getUser(clientFd);
 	//PUT ALL ARGUMENTS IN requestArguments VECTOR
-	while (request >> argument)
-		requestArguments.push_back(argument);
 	//RETURN IF INVALID ARG NUMBER
 	if (requestArguments.size() < 2)
 		return ;
@@ -162,7 +158,10 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		return ;
 	}
 	//HANDLE COMMANDS
-	std::cout << "Handling command : [" << socketData << "]" << std::endl;
+	for (size_t i = 0; i < requestArguments.size(); i++)
+	{
+		std::cout << "Handling command : [" << i << "] = [" << requestArguments[i] << "]" << std::endl;
+	}
 	if (requestArguments[0] == "PASS")
 		pass(requestArguments, *currentClient);
 	else if (requestArguments[0] == "NICK")

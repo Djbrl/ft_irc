@@ -47,31 +47,22 @@ size_t expect_space(std::string str, size_t &i)
 
 void expect_params(std::string str, size_t &i, std::vector<std::string> &params)
 {
-    expect_space(str, i);
-    try
+    if (str.at(i) == ':')
     {
-        if (str.at(i) == ':')
-        {
-            i++;
-            size_t word_size = string_expect_fn(str, i, istrailing);
-            std::string param(&str[i], &str[i + word_size]);
-            i += word_size;
-            params.push_back(param);
-        }
-        else
-        {
-            size_t word_size = string_expect_fn(str, i, ismiddle);
-            if (word_size == 0)
-                throw std::exception();
-            std::string param(&str[i], &str[i + word_size]);
-            i += word_size;
-            params.push_back(param);
-            expect_params(str, i, params);
-        }
+        i++;
+        size_t word_size = string_expect_fn(str, i, istrailing);
+        std::string param(&str[i], &str[i + word_size]);
+        i += word_size;
+        params.push_back(param);
     }
-    catch(const std::exception& e)
+    else
     {
-        std::cerr << e.what() << '\n';
+        size_t word_size = string_expect_fn(str, i, ismiddle);
+        if (word_size == 0)
+            throw std::exception();
+        std::string param(&str[i], &str[i + word_size]);
+        i += word_size;
+        params.push_back(param);
     }
 }
 
@@ -98,9 +89,16 @@ std::vector<std::string> parse_message(std::string str)
 
     std::string command_name = expect_command(str, i);
     std::vector<std::string> params;
-    
-    expect_params(str, i, params);
 
-    params.insert(params.begin(), command_name);
+    params.push_back(command_name);
+    while (i < str.size())
+    {
+        if (expect_space(str, i) == 0)
+            break ;
+        expect_params(str, i, params);    
+    }
+    
+    if (i < str.size())
+        std::cout << "Didn't read all of the message" << std::endl;
     return params;
 }

@@ -158,8 +158,16 @@ void IrcServer::handleRequest(int clientFd)
 	std::vector<std::string> requests = splitStringByCRLF(buffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
-		// std::cout << "command in queue : " << requests[i] << "\n";
-		dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, const_cast<char *>(requests[i].c_str()));
+		std::cout << "command in queue : " << requests[i] << std::endl;
+		try
+		{
+			std::vector<std::string> args = parse_message(requests[i]);
+			dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, args);
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << "Error parsing command: " << e.what() << '\n';
+		}
 	}
 	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	return ;

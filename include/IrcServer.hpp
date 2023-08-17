@@ -36,7 +36,7 @@ class IrcServer : public AServer
 	void								acceptClient();
 	
 	//PROTOTYPE
-	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
+	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::vector<std::string>);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								user(std::vector<std::string> &requestArguments, User &currentClient);
