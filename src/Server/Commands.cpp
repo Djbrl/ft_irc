@@ -1,6 +1,6 @@
 #include "IrcServer.hpp"
 
-std::vector<std::string>	IrcServer::splitArgument(std::string &argument)
+std::vector<std::string>	IrcServer::splitJoinArgument(std::string &argument)
 {
 	std::vector<std::string>	splitArgument;
 	std::string					subString;
@@ -75,6 +75,43 @@ void	IrcServer::joinChannel(const std::string &channelName, User &currentClient)
 	}
 }
 
+int	IrcServer::checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient)
+{
+	std::string channelName = channel->second.getChannelName();
+	
+	//Look for +i in channel's mode
+	if (channel->second.findMode("+i"))
+	{
+		//check if client has been invited !
+		if (!currentClient.channelIsInList(channelName))
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_INVITEONLYCHAN(channelName).c_str()));
+			return (-1); //cannot join this channel
+		}
+	}
+	std::string	password = channel->second.getChannelPassword();
+	if (!password.empty())
+	{
+		//if the user entered a password - check it is the write password
+		if (channelIndex < passwords.size())
+		{
+			if(password != passwords[channelIndex])
+			{
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_BADCHANNELKEY(channelName).c_str()));
+				return (-1);
+			}
+			else
+				return (0);
+		}
+		else
+		{
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_BADCHANNELKEY(channelName).c_str()));
+			return (-1);
+		}
+	}
+	return (0); //user can join the channel
+}
+
 void IrcServer::join(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	std::vector<std::string>	channels;
@@ -83,7 +120,7 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 	if (currentClient.isAuthentificated())
 	{
 		//get all channels
-		channels = splitArgument(requestArguments[1]);
+		channels = splitJoinArgument(requestArguments[1]);
 
 		//time to check if channels are valid in themselves
 		std::vector<std::string>	validChannels;
@@ -96,7 +133,7 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 			if (requestArguments.size() == 3)
 			{
 				//get all passwords (if there are any)
-				passwords = splitArgument(requestArguments[2]);
+				passwords = splitJoinArgument(requestArguments[2]);
 			}
 			for (std::size_t i = 0; i < validChannels.size(); i++)
 			{
@@ -111,7 +148,12 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 					createChannel(channelName, currentClient);
 				//option 2: the channel exists
 				else
-					joinChannel(channelName, currentClient);
+				{
+					int retCheck = checkChannelExceptions(isExistingChannel, passwords, i, currentClient);
+					//if all conditions are met, then it is possible to join channel
+					if (retCheck == 0)
+						joinChannel(channelName, currentClient);
+				}
 			}
 
 		}
@@ -125,7 +167,7 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 				std::cout << "PASS is : " << passwords[i] << std::endl;
 	}
 	else
-		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));		
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
 }	
 	
 // 	if (requestArguments[0] == "JOIN" && currentClient.isAuthentificated())
