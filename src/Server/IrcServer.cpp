@@ -131,7 +131,6 @@ void	IrcServer::acceptClient()
 		g_clientSockets.push_back(dataSocketFd);
 		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
 		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BWHITE << clientIP << RESET << "." << std::endl;
-		handleCAPLS(dataSocketFd);
 		_ConnectedUsers.addUser(dataSocketFd);
 	}
 	catch (const AcceptException& e)
@@ -144,8 +143,9 @@ void	IrcServer::acceptClient()
 void IrcServer::handleRequest(int clientFd)
 {
 	char	buffer[MESSAGE_BUFFER_SIZE] = {0};
-	int		bytes_received;
+	ssize_t		bytes_received;
 
+	memset(buffer, 0, sizeof(buffer));
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
 	if (bytes_received <= 0)
 	{
@@ -153,9 +153,28 @@ void IrcServer::handleRequest(int clientFd)
 		clearFdFromList(clientFd);
 		return;
 	}
+	User *current_user = _ConnectedUsers.getUser(clientFd);
+	if (!current_user)
+		throw std::exception();
+	
+	char *ubuffer = current_user->buffer;
+	char *position = std::find(ubuffer, ubuffer + MESSAGE_BUFFER_SIZE, '\0');
+
+	size_t buffer_size_left = MESSAGE_BUFFER_SIZE - std::distance(ubuffer, position);
+
+	size_t n_to_copy = std::min(size_t(bytes_received), buffer_size_left);
+	memcpy(position, buffer, n_to_copy);
     // parseQuery(clientFd, buffer);
     //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
-	std::vector<std::string> requests = splitStringByCRLF(buffer);
+	
+	std::cout << "buffer :" << buffer << std::endl;
+	std::cout << "user buffer :" << current_user->buffer << std::endl;
+	
+	if (buffer_size_left == 0 && std::string(buffer).find("\r\n", 0) == std::string::npos)
+		return ;
+	if (buffer_size_left != 0 && std::string(ubuffer).find("\r\n", 0) == std::string::npos)
+		return ;
+	std::vector<std::string> requests = splitStringByCRLF(std::string(ubuffer), ubuffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
 		std::cout << "command in queue : " << requests[i] << std::endl;

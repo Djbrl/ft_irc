@@ -76,7 +76,7 @@ class IrcServer : public AServer
 	void								handleRequest(int clientFd);
 	
 	//UTILS
-	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
+	std::vector<std::string>			splitStringByCRLF(const std::string &socketData, char *buffer);
 	void								handleCAPLS(int clientFd);
 	void    							clearFdFromList(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);

@@ -25,7 +25,7 @@ void	IrcServer::handleCAPLS(int clientFd)
 	char						buf[MESSAGE_BUFFER_SIZE];
 
 	recv(clientFd, buf, MESSAGE_BUFFER_SIZE, 0);
-	request = splitStringByCRLF(std::string(buf));
+	// request = splitStringByCRLF(std::string(buf));
 	requestSplit << request[0];
 	requestSplit >> word;
 	if (word == "CAP")

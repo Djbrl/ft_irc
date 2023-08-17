@@ -49,7 +49,7 @@
 # define PORT                   6667
 # define MAX_EVENTS             10
 # define MAX_DATA_SIZE          4096
-# define MESSAGE_BUFFER_SIZE    1024
+# define MESSAGE_BUFFER_SIZE    512
 
 //COMMANDS___________________________________________________________________________________________________________
 

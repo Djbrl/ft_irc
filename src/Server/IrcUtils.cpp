@@ -2,7 +2,7 @@
 
 //MESSAGES___________________________________________________________________________________________________________
 
-std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketData)
+std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketData, char *buffer)
 {
     std::vector<std::string> result;
 
@@ -15,9 +15,11 @@ std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketD
         startPos = delimiterPos + 2;
         delimiterPos = socketData.find("\r\n", startPos);
     }
+	memset(buffer, '\0', sizeof(*buffer) * MESSAGE_BUFFER_SIZE);
     if (startPos < socketData.length())
 	{
-        result.push_back(socketData.substr(startPos));
+        std::string last_in_buffer = socketData.substr(startPos);
+		memcpy(buffer, last_in_buffer.c_str(), std::min(size_t(MESSAGE_BUFFER_SIZE), last_in_buffer.size()));
     }
     return result;
 }

@@ -10,6 +10,7 @@ User::User()
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
 	_socket = -1;
+	memset(buffer, '\0', sizeof(buffer));
 }
 
 User::User(const std::string &name)
@@ -19,6 +20,7 @@ User::User(const std::string &name)
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
 	_socket = -1;
+	memset(buffer, '\0', sizeof(buffer));
 }
 
 User::~User()
@@ -40,6 +42,7 @@ User&	User::operator=(const User &cpy)
 		this->_channelsInvitedTo = cpy._channelsInvitedTo;
 		this->_lastActiveTime = cpy._lastActiveTime;
 		this->_hasPassword = cpy._hasPassword;
+		memcpy(this->buffer, cpy.buffer, sizeof(cpy.buffer));
 	}
 	return *this;
 }
