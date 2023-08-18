@@ -37,6 +37,7 @@ class IrcServer : public AServer
 	
 	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::vector<std::string>);
+	void								capls(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								user(std::vector<std::string> &requestArguments, User &currentClient);
@@ -77,7 +78,6 @@ class IrcServer : public AServer
 	
 	//UTILS
 	std::vector<std::string>			splitStringByCRLF(const std::string &socketData, char *buffer);
-	void								handleCAPLS(int clientFd);
 	void    							clearFdFromList(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________
