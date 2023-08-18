@@ -77,13 +77,13 @@ void						signalHandler(int signal);
 # define RPL_MYINFO(clientNickname)                                 (std::string(":" HOSTNAME " 004 ") + clientNickname + " " + HOSTNAME + " " VERSION " . itkol\r\n")
 # define RPL_PART(clientNickname, channel)							(std::string(":" HOSTNAME " 324 ") + clientNickname + " " + channel + " :You have left " + channel + "\r\n")
 # define RPL_PONG(param)					                        ("PONG :" + std::string(param) + "\r\n")
-# define RPL_PARTNOTICE(clientNickname, channel)					(":ft_irc 400 " + clientNickname + " " + channel + " :- You have left the channel\r\n")
+# define RPL_PARTNOTICE(clientNickname, channel)					(":" + std::string(HOSTNAME) + " 400 " + clientNickname + " " + channel + " :- You have left the channel\r\n")
 
 //OTHER
 # define RPL_CHANNELMODEIS(channel, modes)                          (":" + std::string(HOSTNAME) + " 324 " + channel + " " + modes + "\r\n")
-# define RPL_TOPIC(clientNickname, channel, topic)		            (":ft_irc 332 " + clientNickname + " " + channel + " :" + topic + "\r\n")
-# define RPL_NOTOPIC(clientNickname, channel)                       (std::string(":" HOSTNAME " 331 ") + clientNickname + " " + channel + " :No topic is set\r\n")
-# define RPL_INVITING(clientNickname, invitedNick, channel)         (std::string(":" HOSTNAME " 341 ") + clientNickname + " " + invitedNick + " " + channel + " :Was succesfully invited\r\n")    
+# define RPL_TOPIC(clientNickname, channel, topic)		            (":" + std::string(HOSTNAME) + " 332 " + clientNickname + " " + channel + " :" + topic + "\r\n")
+# define RPL_NOTOPIC(clientNickname, channel)                       (":" + std::string(HOSTNAME) + " 331 " + clientNickname + " " + channel + " :No topic is set\r\n")
+# define RPL_INVITING(clientNickname, invitedNick, channel)         (":" + std::string(HOSTNAME) + " 341 " + clientNickname + " " + invitedNick + " " + channel + " :Was succesfully invited\r\n")    
 # define RPL_NAMREPLY(clientNickname, channel, names)	            (":" + std::string(HOSTNAME) + " 353 " + clientNickname + " = " + channel + " :" + names +"\r\n")
 # define RPL_ENDOFNAMES(clientNickname, channel)		            (":" + std::string(HOSTNAME) + " 366 " + clientNickname + " " + channel + " :End of /NAMES list\r\n")
 # define RPL_ALREADYREGISTRED(clientNickname, channel)	            (":" + std::string(HOSTNAME) + " 403 " + clientNickname + " " + channel + " :You are already in that channel\r\n")
