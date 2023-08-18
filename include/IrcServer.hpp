@@ -41,7 +41,9 @@ class IrcServer : public AServer
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								user(std::vector<std::string> &requestArguments, User &currentClient);
 	void								join(std::vector<std::string> &requestArguments, User &currentClient);
+	void								list(std::vector<std::string> &requestArguments, User &currentClient);
 	void								part(std::vector<std::string> &requestArguments, User &currentClient);
+	void								quit(std::vector<std::string> &requestArguments, User &currentClient);
 	void								who(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
 	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
@@ -55,6 +57,7 @@ class IrcServer : public AServer
 	void								dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &specialMode, std::map<std::string, Channel>::iterator channel, User &currentClient);
 	void								createChannel(const std::string &channelName, User &currentClient);
 	void								joinChannel(const std::string &channelName, User &currentClient);
+	void								broadcastMessageToUsers(const std::string &message);
 	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
 	int									checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient);
 	std::vector<std::string>			splitJoinArgument(std::string &argument);
@@ -77,7 +80,7 @@ class IrcServer : public AServer
 	
 	//UTILS
 	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
-	void    							clearFdFromList(int client_fd);
+	void    							disconnectUserFromServer(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________
 	//SETTERS__________________________________________________________________________________________________

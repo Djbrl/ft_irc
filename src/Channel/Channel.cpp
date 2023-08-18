@@ -200,7 +200,7 @@ std::string	Channel::printMemberList() const
 	std::string	memberList;
 	for (size_t i = 0; i < _membersList.size(); i++)
 	{
-		memberList += _membersList[i].getNickname();
+		memberList += "@" + _membersList[i].getNickname();
 		if(i + 1 < _membersList.size())
 			memberList += ",";
 	}

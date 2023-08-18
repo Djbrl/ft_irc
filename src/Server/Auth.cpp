@@ -7,6 +7,40 @@ void	IrcServer::capls(std::vector<std::string> &requestArguments, User &currentC
 	safeSendMessage(currentClient.getSocket(), const_cast<char *>(CAPLS.c_str()));	
 }
 
+void	IrcServer::quit(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	std::map<std::string, Channel>::iterator	it = _Channels.begin();
+	int											clientFd;
+	std::string									quitRPL;
+	std::string 								quitMessage;
+	std::string									quitMessageReason;
+	std::vector<std::string>					channelList;
+
+	for (size_t i = 1; i < requestArguments.size(); i++)
+		quitMessageReason += requestArguments[i] + " ";
+	clientFd = currentClient.getSocket();
+	quitMessage = "has left the server (reason " + quitMessageReason + ")";
+	quitRPL = ":" + currentClient.getNickname() + "!" + currentClient.getUsername() + "@" + HOSTNAME + " QUIT :" + requestArguments[1] + "\r\n";
+	safeSendMessage(clientFd, const_cast<char *>(quitRPL.c_str()));
+	while (it != _Channels.end())
+	{
+		if (it->second.hasMember(currentClient))
+		{
+			it->second.sendMessageToUsers(quitMessage, currentClient.getNickname());
+			if (_Channels[it->first].getMembersList().size() == 1)
+				channelList.push_back(it->first);
+		}
+		it++;
+	}
+	disconnectUserFromServer(clientFd);
+	for (size_t i = 0; i < channelList.size(); i++)
+	{
+		std::string noticeMessage = "NOTICE broadcast :" + channelList[i] + " has been removed for inactivity" + "\r\n";
+		_Channels.erase(channelList[i]);
+		broadcastMessageToUsers(noticeMessage);
+	}
+}
+
 void	IrcServer::pass(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	if (requestArguments[0] == "PASS" && !currentClient.hasPassword())
@@ -126,7 +160,6 @@ void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentCl
 	safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPL_PONG(requestArguments[1]).c_str()));
 }
 
-
 void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *socketData)
 {
 	std::vector<std::string> 	requestArguments;
@@ -139,8 +172,9 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	while (request >> argument)
 		requestArguments.push_back(argument);
 	//RETURN IF INVALID ARG NUMBER
-	if (requestArguments.size() < 2)
-		return ;
+	//REFACTOR THIS
+	// if (requestArguments.size() < 2 || (requestArguments.size() < 2 && requestArguments[0] == "LIST"))
+	// 	return ;
 	//RETURN IF PASS ISNT VALIDATED YET
 	if ((requestArguments[0] != "PASS" && !currentClient->hasPassword()) && requestArguments[0] != "CAP")
 	{
@@ -161,6 +195,8 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		part(requestArguments, *currentClient);
 	else if (requestArguments[0] == "WHO")
 		who(requestArguments, *currentClient);
+	else if (requestArguments[0] == "LIST")
+		list(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PRIVMSG" && requestArguments.size() > 2)
 		privmsg(requestArguments, *currentClient);
 	else if (requestArguments[0] == "NOTICE" && requestArguments.size() > 2)
@@ -175,6 +211,8 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 		topic(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PING")
 		pong(requestArguments, *currentClient);
+	else if (requestArguments[0] == "QUIT")
+		quit(requestArguments, *currentClient);
 	else if (requestArguments[0] == "CAP" && requestArguments[1] == "LS" && requestArguments[1] == "302")
 		capls(requestArguments, *currentClient);
 	return ;

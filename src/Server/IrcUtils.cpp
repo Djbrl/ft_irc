@@ -40,6 +40,12 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	return ;
 }
 
+void	IrcServer::broadcastMessageToUsers(const std::string &message)
+{
+	for (size_t i = 0; i < g_clientSockets.size(); i++)
+		safeSendMessage(g_clientSockets[i], const_cast<char *>(message.c_str()));
+}
+
 void    IrcServer::sendWelcomeMessage(int clientSocket)
 {
 	char welcomeMessage[512] = "You have successfully connected to ft_IRC! Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
@@ -93,7 +99,7 @@ void	IrcServer::updateMemberInChannels(std::string &oldNick, User &target)
 
 //CLEAN UP___________________________________________________________________________________________________________
 
-void    IrcServer::clearFdFromList(int clientFd)
+void    IrcServer::disconnectUserFromServer(int clientFd)
 {
 	int j = 0;
 	std::map<std::string, Channel>::iterator	it = _Channels.begin();

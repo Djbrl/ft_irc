@@ -290,6 +290,45 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 	return ;
 }
 
+void IrcServer::list(std::vector<std::string> &requestArguments, User &currentClient)
+{
+    if (requestArguments[0] == "LIST")
+    {
+        // Iterate through each channel and send the channel information to the client
+        std::map<std::string, Channel>::const_iterator channelIt = _Channels.begin();
+        std::map<std::string, Channel>::const_iterator channelEnd = _Channels.end();
+        for (; channelIt != channelEnd; ++channelIt)
+        {
+            const std::string &channelName = channelIt->first;
+            const Channel &channel = channelIt->second;
+
+            // Prepare the LIST response for the current channel
+            std::string userList = channel.printMemberList();
+            std::string topic = channel.getChannelTopic();
+            int userCount = channel.getMembersList().size();
+
+            std::string listResponse = ":ft_irc 322 " + currentClient.getNickname() + " " + channelName + " " +
+                                       std::to_string(userCount) + " :" + topic + "\r\n";
+
+            // Send the LIST response to the client
+            safeSendMessage(currentClient.getSocket(), const_cast<char *>(listResponse.c_str()));
+        }
+
+        // Send the end of list response
+        std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of channel list\r\n";
+        safeSendMessage(currentClient.getSocket(), const_cast<char *>(endListResponse.c_str()));
+    }
+    else
+    {
+        // Handle authentication and error responses
+        if (!currentClient.isAuthentificated())
+        {
+            safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+        }
+    }
+}
+
+
 void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	if (requestArguments[0] == "PRIVMSG" && currentClient.isAuthentificated())
@@ -432,10 +471,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 						}
 						isExistingChannel->second.removeMember(*isExistingUser);
 					}
-
-
 				}
-
 			}
 		}
 	}
