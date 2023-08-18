@@ -730,7 +730,12 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 		isExistingChannel = _Channels.find(channelName);
 		if (isExistingChannel == _Channels.end())
 		{
-			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
+			//Verify if channelName is a user and send a error numeric that MODE user is not supported
+			if (_ConnectedUsers.getUser(channelName) != NULL)
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_UNKNOWNERROR(currentClient.getNickname(), "MODE " + channelName, "user mode is not supported").c_str()));
+			//Channel doesn't exist
+			else
+				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
 			return ; 
 		}
 		else

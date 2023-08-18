@@ -88,6 +88,7 @@ void						signalHandler(int signal);
 # define RPL_ENDOFNAMES(clientNickname, channel)		            (":" + std::string(HOSTNAME) + " 366 " + clientNickname + " " + channel + " :End of /NAMES list\r\n")
 # define RPL_ALREADYREGISTRED(clientNickname, channel)	            (":" + std::string(HOSTNAME) + " 403 " + clientNickname + " " + channel + " :You are already in that channel\r\n")
 
+# define ERR_UNKNOWNERROR(clientNickname, subcommand, info)         (":" + std::string(HOSTNAME) + " 400 " + clientNickname + " " + subcommand + " :" + info + "\r\n")
 # define ERR_NOSUCHNICK(clientNickname, nickNotFound)               (":" + std::string(HOSTNAME) + " 401 " + clientNickname + " " + nickNotFound + " :No such nick\r\n")
 # define ERR_NOSUCHCHANNEL(clientNickname, channel)		            (":" + std::string(HOSTNAME) + " 403 " + clientNickname + " " + channel + " :No such channel\r\n")
 # define ERR_NOTONCHANNEL(clientNickname, channel)                  (":" + std::string(HOSTNAME) + " 442 " + clientNickname + " " + channel + " :You're not on that channel\r\n")
