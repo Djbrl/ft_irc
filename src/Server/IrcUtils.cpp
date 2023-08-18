@@ -30,6 +30,13 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	int dataSent = 0;
 	int messageLen = strlen(message);
 
+	//Server log of what is sended
+	std::string nickname = "";
+	User *user = _ConnectedUsers.getUser(clientFd);
+	if (user != NULL)
+		nickname = user->getNickname();
+	std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << messageLen << "] message[" << message << "]" << std::endl;
+
 	while (dataSent < messageLen)
 	{
 		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
