@@ -278,7 +278,7 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 										"ft_irc" + " " + channelName + " " + \
 										currentClient.getNickname() + " H :* " + currentClient.getRealname() + "\r\n";
 			std::string endWhoIsResponse =	":ft_irc 315 " + currentClient.getNickname() + " " + channelName + \
-											" :End of WHO list\r\n";
+											" :End of WHO\r\n";
 			std::string	RPLResponse = whoIsResponse + endWhoIsResponse;
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
 		}
@@ -305,17 +305,21 @@ void IrcServer::list(std::vector<std::string> &requestArguments, User &currentCl
             // Prepare the LIST response for the current channel
             std::string userList = channel.printMemberList();
             std::string topic = channel.getChannelTopic();
-            int userCount = channel.getMembersList().size();
-
+			std::stringstream nbUsers;
+			nbUsers << channel.getMembersList().size();
+			std::vector<std::string> modesList = channel.getModesList();
+			std::string modes = "+";
+			for (size_t i = 0; i < modesList.size(); i++)
+				modes += modesList[i][1];
             std::string listResponse = ":ft_irc 322 " + currentClient.getNickname() + " " + channelName + " " +
-                                       std::to_string(userCount) + " :" + topic + "\r\n";
+                                       nbUsers.str() + " " + "[" + modes + "]" + " :" + topic + "\r\n";
 
             // Send the LIST response to the client
             safeSendMessage(currentClient.getSocket(), const_cast<char *>(listResponse.c_str()));
         }
 
         // Send the end of list response
-        std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of channel list\r\n";
+        std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of /LIST\r\n";
         safeSendMessage(currentClient.getSocket(), const_cast<char *>(endListResponse.c_str()));
     }
     else

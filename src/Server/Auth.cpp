@@ -171,16 +171,15 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	//PUT ALL ARGUMENTS IN requestArguments VECTOR
 	while (request >> argument)
 		requestArguments.push_back(argument);
-	//RETURN IF INVALID ARG NUMBER
-	//REFACTOR THIS
-	// if (requestArguments.size() < 2 || (requestArguments.size() < 2 && requestArguments[0] == "LIST"))
-	// 	return ;
 	//RETURN IF PASS ISNT VALIDATED YET
 	if ((requestArguments[0] != "PASS" && !currentClient->hasPassword()) && requestArguments[0] != "CAP")
 	{
 		safeSendMessage(currentClient->getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient->getNickname()).c_str()));
 		return ;
 	}
+	//RETURN IF INVALID ARG NUMBER
+	if (requestArguments.size() < 2 && (requestArguments[0] != "LIST"))
+		return ;
 	//HANDLE COMMANDS
 	std::cout << "Handling command : [" << socketData << "]" << std::endl;
 	if (requestArguments[0] == "PASS")
