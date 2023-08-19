@@ -15,6 +15,14 @@ void signalHandler(int signal)
 		std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
 		exit(EXIT_SUCCESS);
 	}
+	if (signal == SIGPIPE)
+	{
+		std::cout << RED << "\n[IRC Server shutdown by SIGPIPE Request, an error occurred...]" << RESET << std::endl;
+		for (size_t i = 0; i < g_clientSockets.size(); i++)
+			close(g_clientSockets[i]);
+		std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
 //IRCSERVER CLASS______________________________________________________________________________________________________________________________________
@@ -28,6 +36,7 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 	std::signal(SIGINT, signalHandler);
 	std::signal(SIGQUIT, signalHandler);
 	std::signal(SIGTERM, signalHandler);
+	std::signal(SIGPIPE, signalHandler);
 	try
 	{
 		if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)

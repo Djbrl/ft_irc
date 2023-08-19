@@ -115,7 +115,8 @@ void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentCl
 				int			nbOfChannels;
 				std::string	newNickname = requestArguments[1];
 
-				newNickname += "_";
+				while (_ConnectedUsers.getUser(newNickname) != NULL)
+					newNickname += "_";
 				_ConnectedUsers.linkUserToNickname(newNickname, currentClient.getSocket());
 				currentClient.setNickname(newNickname);
 				nbOfUsers = _ConnectedUsers.size();

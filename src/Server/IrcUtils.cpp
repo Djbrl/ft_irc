@@ -43,6 +43,7 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
 		{
 			std::cerr << "Error : Couldn't send message [" + messagePreview.substr(0, messagePreview.size()/2) + "...] to client." << std::endl;
+			disconnectUserFromServer(clientFd);
 			return ;
 		}
 		dataSent += bytes;
