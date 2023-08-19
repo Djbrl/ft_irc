@@ -89,13 +89,15 @@ std::vector<std::string> parse_message(std::string str)
 
     std::string command_name = expect_command(str, i);
     std::vector<std::string> params;
-
     params.push_back(command_name);
-    while (i < str.size())
+
+    while (i <= str.size())
     {
         if (expect_space(str, i) == 0)
             break ;
-        expect_params(str, i, params);    
+        if (i > str.size())
+            break;
+        expect_params(str, i, params);
     }
     
     if (i < str.size())

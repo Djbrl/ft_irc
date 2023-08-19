@@ -178,7 +178,7 @@ void IrcServer::handleRequest(int clientFd)
 	std::vector<std::string> requests = splitStringByCRLF(std::string(ubuffer), ubuffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
-		std::cout << "command in queue : " << requests[i] << std::endl;
+		std::cout << "command in queue [" << requests[i] << "]" << std::endl;
 		try
 		{
 			std::vector<std::string> args = parse_message(requests[i]);
