@@ -10,35 +10,41 @@ void	IrcServer::capls(std::vector<std::string> &requestArguments, User &currentC
 void	IrcServer::quit(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	std::map<std::string, Channel>::iterator	it = _Channels.begin();
-	int											clientFd;
+	int											clientFd = currentClient.getSocket();
 	std::string									quitRPL;
 	std::string 								quitMessage;
 	std::string									quitMessageReason;
 	std::vector<std::string>					channelList;
 
+	//SEND QUIT RPL
 	for (size_t i = 1; i < requestArguments.size(); i++)
 		quitMessageReason += requestArguments[i] + " ";
-	clientFd = currentClient.getSocket();
 	quitMessage = "has left the server (reason " + quitMessageReason + ")";
 	quitRPL = ":" + currentClient.getNickname() + "!" + currentClient.getUsername() + "@" + HOSTNAME + " QUIT :" + requestArguments[1] + "\r\n";
 	safeSendMessage(clientFd, const_cast<char *>(quitRPL.c_str()));
+	//NOTIFY CHANNELS
 	while (it != _Channels.end())
 	{
 		if (it->second.hasMember(currentClient))
 		{
-			it->second.sendMessageToUsers(quitMessage, currentClient.getNickname());
+			//CHANNELS WHERE USER IS ALONE 
 			if (_Channels[it->first].getMembersList().size() == 1)
 				channelList.push_back(it->first);
+			else
+				it->second.sendMessageToUsers(quitMessage, currentClient.getNickname());
 		}
 		it++;
 	}
+	//DISCONNECT USER
 	disconnectUserFromServer(clientFd);
+	//DELETE CHANNELS WHERE USER WAS THE ONLY MEMBER
 	for (size_t i = 0; i < channelList.size(); i++)
 	{
 		std::string noticeMessage = "NOTICE broadcast :" + channelList[i] + " has been removed for inactivity" + "\r\n";
 		_Channels.erase(channelList[i]);
-		broadcastMessageToUsers(noticeMessage);
+		_ConnectedUsers.broadcastMessage(const_cast<char *>(noticeMessage.c_str()));
 	}
+	return ;
 }
 
 void	IrcServer::pass(std::vector<std::string> &requestArguments, User &currentClient)

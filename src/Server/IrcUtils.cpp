@@ -24,26 +24,21 @@ std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketD
 
 void    IrcServer::safeSendMessage(int clientFd, char *message)
 {
-	int bytes;
-	int dataSent = 0;
-	int messageLen = strlen(message);
+	int 		bytes;
+	int 		dataSent = 0;
+	int 		messageLen = strlen(message);
+	std::string messagePreview(message);
 
 	while (dataSent < messageLen)
 	{
 		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
 		{
-			std::cout << "Error : Couldn't send data to client." << std::endl;
+			std::cerr << "Error : Couldn't send message [" + messagePreview.substr(0, messagePreview.size()/2) + "...] to client." << std::endl;
 			return ;
 		}
 		dataSent += bytes;
 	}
 	return ;
-}
-
-void	IrcServer::broadcastMessageToUsers(const std::string &message)
-{
-	for (size_t i = 0; i < g_clientSockets.size(); i++)
-		safeSendMessage(g_clientSockets[i], const_cast<char *>(message.c_str()));
 }
 
 void    IrcServer::sendWelcomeMessage(int clientSocket)

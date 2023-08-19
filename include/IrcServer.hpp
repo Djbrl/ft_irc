@@ -57,7 +57,6 @@ class IrcServer : public AServer
 	void								dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &specialMode, std::map<std::string, Channel>::iterator channel, User &currentClient);
 	void								createChannel(const std::string &channelName, User &currentClient);
 	void								joinChannel(const std::string &channelName, User &currentClient);
-	void								broadcastMessageToUsers(const std::string &message);
 	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
 	int									checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient);
 	std::vector<std::string>			splitJoinArgument(std::string &argument);

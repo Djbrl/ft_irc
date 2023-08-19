@@ -292,44 +292,33 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 
 void IrcServer::list(std::vector<std::string> &requestArguments, User &currentClient)
 {
-    if (requestArguments[0] == "LIST")
+	(void)requestArguments;
+    if (currentClient.isAuthentificated())
     {
-        // Iterate through each channel and send the channel information to the client
-        std::map<std::string, Channel>::const_iterator channelIt = _Channels.begin();
-        std::map<std::string, Channel>::const_iterator channelEnd = _Channels.end();
-        for (; channelIt != channelEnd; ++channelIt)
+        std::map<std::string, Channel>::const_iterator it = _Channels.begin();
+        while (it != _Channels.end())
         {
-            const std::string &channelName = channelIt->first;
-            const Channel &channel = channelIt->second;
+			std::vector<std::string>	modesList = it->second.getModesList();
+			std::stringstream			nbUsers;
+            std::string					userList = it->second.printMemberList();
+            std::string					topic = it->second.getChannelTopic();
+			std::string					modes = "+";
+            Channel						channel = it->second;
 
-            // Prepare the LIST response for the current channel
-            std::string userList = channel.printMemberList();
-            std::string topic = channel.getChannelTopic();
-			std::stringstream nbUsers;
 			nbUsers << channel.getMembersList().size();
-			std::vector<std::string> modesList = channel.getModesList();
-			std::string modes = "+";
 			for (size_t i = 0; i < modesList.size(); i++)
 				modes += modesList[i][1];
-            std::string listResponse = ":ft_irc 322 " + currentClient.getNickname() + " " + channelName + " " +
-                                       nbUsers.str() + " " + "[" + modes + "]" + " :" + topic + "\r\n";
-
-            // Send the LIST response to the client
+            std::string listResponse =	":ft_irc 322 " + currentClient.getNickname() + " " + it->first + " " +
+                                    	nbUsers.str() + " " + "[" + modes + "]" + " :" + topic + "\r\n";
             safeSendMessage(currentClient.getSocket(), const_cast<char *>(listResponse.c_str()));
+			it++;
         }
-
-        // Send the end of list response
         std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of /LIST\r\n";
         safeSendMessage(currentClient.getSocket(), const_cast<char *>(endListResponse.c_str()));
     }
     else
-    {
-        // Handle authentication and error responses
-        if (!currentClient.isAuthentificated())
-        {
-            safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-        }
-    }
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+	return ;
 }
 
 
