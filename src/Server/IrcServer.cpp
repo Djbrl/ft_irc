@@ -154,13 +154,31 @@ void IrcServer::handleRequest(int clientFd)
 	ssize_t		bytes_received;
 
 	memset(buffer, 0, sizeof(buffer));
+
+	//UNEXPECTED DISCONNECTION
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
 	if (bytes_received <= 0)
 	{
 		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
+		//CLEANUP AND NOTIFY USERS
 		disconnectUserFromServer(clientFd);
+		//DELETE CHANNELS THAT WILL BECOME EMPTY
+		std::vector<std::string> channelsToDelete;
+		for (std::map<std::string, Channel>::iterator it = _Channels.begin(); it != _Channels.end(); it++)
+		{
+			if (it->second.hasMember(*_ConnectedUsers.getUser(clientFd)) && it->second.getMembersList().size() == 1)
+			{
+				//delayed delete to avoid segfault
+				channelsToDelete.push_back(it->first);
+				std::string noticeMessage = "NOTICE broadcast :" + it->first + " has been removed for inactivity" + "\r\n";
+				_ConnectedUsers.broadcastMessage(const_cast<char *>(noticeMessage.c_str()));
+			}
+		}
+		for (size_t i = 0; i < channelsToDelete.size(); i++)
+			_Channels.erase(channelsToDelete[i]);
 		return;
 	}
+
 	User *current_user = _ConnectedUsers.getUser(clientFd);
 	if (!current_user)
 		throw std::exception();

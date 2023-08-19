@@ -109,7 +109,7 @@ void    IrcServer::disconnectUserFromServer(int clientFd)
 	int j = 0;
 	std::map<std::string, Channel>::iterator	it = _Channels.begin();
 	User										*userToRemove = _ConnectedUsers.getUser(clientFd);
-
+	
 	//REMOVE USER FROM ALL CHANNELS AND USERMAP
 	if (userToRemove != NULL)
 	{
@@ -118,12 +118,9 @@ void    IrcServer::disconnectUserFromServer(int clientFd)
 			if (it->second.hasMember(*userToRemove))
 			{
 				it->second.removeMember(*userToRemove);
-				if (it->second.getMembersList().size() == 0)
-				{
-					std::string noticeMessage = "NOTICE broadcast :" + it->first + " has been removed for inactivity" + "\r\n";
-					_Channels.erase(it->first);
-					_ConnectedUsers.broadcastMessage(const_cast<char *>(noticeMessage.c_str()));
-				}
+				// std::string quitMessage = "has left the server (reason :sudden disconnection";
+				// std::string quitRPL = ":" + userToRemove->getNickname() + "!" + userToRemove->getUsername() + "@" + HOSTNAME + " QUIT :sudden disconnection\r\n";
+				// safeSendMessage(clientFd, const_cast<char *>(quitRPL.c_str()));
 			}
 			if (it->second.isChannelOp(*userToRemove))
 				it->second.removeOperator(*userToRemove);
