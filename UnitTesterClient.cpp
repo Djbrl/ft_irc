@@ -83,20 +83,22 @@ int main(int ac, char **av)
 
     // INIT TESTING SESSION
     int testingSession = initClient(av, SERVER_PORT, SERVER_PASSWORD);
-    std::string nickname1 = "TestingSessionClient";
-    std::string username1 = "session";
-    std::string realname1 = "Testing Session";
-    char CLIENT_REQ1[2048] = {0};
-    snprintf(CLIENT_REQ1, sizeof(CLIENT_REQ1), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\nJOIN #testSession\r\n", SERVER_PASSWORD.c_str(), nickname1.c_str(), username1.c_str(), realname1.c_str());
-    send(testingSession, CLIENT_REQ1, strlen(CLIENT_REQ1), 0);
+    std::string nick = "TestingSessionClient";
+    std::string uname = "session";
+    std::string rname = "Testing Session";
+    char CLIENT_REQ_SESSION[512] = {0};
+    snprintf(CLIENT_REQ_SESSION, sizeof(CLIENT_REQ_SESSION), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\nJOIN #testSession\r\n", SERVER_PASSWORD.c_str(), nick.c_str(), uname.c_str(), rname.c_str());
+    send(testingSession, CLIENT_REQ_SESSION, strlen(CLIENT_REQ_SESSION), 0);
 
     //_________________________TESTING GROUND_____________________________________________________________________________________________________________________________________________//
     //_________________________AUTHENTICATION_____________________________________________________________________________________________________________________________________________//
-    for (int i = 0; i < nbTest ; i++)
+	for (int i = 0; i < nbTest ; i++)
     {
-		//Avoids IRSSI flooding
-        //sleep(1);
+		// //Mitigate IRSSI flooding
+		// //100ms
+        // usleep(100000);
         {
+			//INIT CLIENTS
             int clientSocket = initClient(av, SERVER_PORT, SERVER_PASSWORD);
             if (clientSocket == -1)
             {
@@ -109,31 +111,56 @@ int main(int ac, char **av)
             char CLIENT_REQ[2048] = {0};
             char SERVER_RES[512] = {0};
 
-            // AUTHENTICATE AND JOIN TESTING CHANNEL
-            snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\nJOIN #testSession\r\n", SERVER_PASSWORD.c_str(), nickname.c_str(), username.c_str(), realname.c_str());
-            send(clientSocket, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+            //AUTH TEST
+			{
+				snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\n", SERVER_PASSWORD.c_str(), nickname.c_str(), username.c_str(), realname.c_str());
+				send(clientSocket, CLIENT_REQ, strlen(CLIENT_REQ), 0);
 
-            // FETCH SERVER RESPONSE
-            int bytes_received = recv(clientSocket, SERVER_RES, sizeof(SERVER_RES), 0);
-            if (bytes_received <= 0)
-            {
-                std::cout << "Server connection closed or error occurred." << std::endl;
-                // break;
-            }
-            std::string RES(SERVER_RES, bytes_received);
-            if (RES.substr(0, 14) != ":localhost 001")
-            {
-                ko_count++;
-                std::cout << RED << "AUTH TEST KO" << RESET << " for " << CLIENT_REQ << std::endl;
-            }
+				int bytes_received = recv(clientSocket, SERVER_RES, sizeof(SERVER_RES), 0);
+				if (bytes_received <= 0)
+					std::cout << "Server connection closed or error occurred." << std::endl;
+				std::string RES(SERVER_RES, bytes_received);
+				if (RES.substr(0, 14) != ":localhost 001")
+				{
+					ko_count++;
+					std::cout << RED << "AUTH TEST KO" << RESET << " for " << CLIENT_REQ << std::endl;
+				}
+			}
+
+			//JOIN TEST
+			{
+				snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "JOIN #testSession\r\n");
+           		send(clientSocket, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+
+				int bytes_received = recv(clientSocket, SERVER_RES, sizeof(SERVER_RES), 0);
+				if (bytes_received <= 0)
+					std::cout << "Server connection closed or error occurred." << std::endl;
+				std::string RES(SERVER_RES, bytes_received);
+				if (RES.substr(0, 14) != ":localhost 332")
+				{
+					ko_count++;
+					std::cout << RED << "JOIN TEST KO" << RESET << " for " << CLIENT_REQ << std::endl;
+				}
+			}
+
+			//PRIVMSG TEST
+			{
+				snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PRIVMSG #testSession hi\r\n");
+           		send(clientSocket, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+
+				int bytes_received = recv(clientSocket, SERVER_RES, sizeof(SERVER_RES), 0);
+				if (bytes_received <= 0)
+					std::cout << "Server connection closed or error occurred." << std::endl;
+			}
+
             clients.push_back(clientSocket);
         }
     }
 
     if (ko_count == 0)
-        std::cout << GREEN << "AUTH TEST OK" << RESET << std::endl;
+        std::cout << GREEN << "ALL TESTS OK" << RESET << std::endl;
     //_________________________TESTING GROUND_____________________________________________________________________________________________________________________________________________//
-    // STANDBY
+    // STANDBY TO AVOID TRIGGERING SIGPIPE
 	sleep(5);
     // CLEAN CLIENT FDS
     for (size_t i = 0; i < clients.size(); i++)
