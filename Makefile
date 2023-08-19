@@ -57,10 +57,13 @@ all: $(NAME) client
 	@echo "Ready : ${GREEN}`pwd`/${NAME}${RESET}"
 
 clean:
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) UnitTesterClient
+
+client:
+	c++ UnitTesterClient.cpp -o UnitTesterClient
 
 fclean:
-	@rm -rf $(BUILD_PATH) $(NAME)
+	@rm -rf $(BUILD_PATH) $(NAME) UnitTesterClient
 
 re: fclean all
 

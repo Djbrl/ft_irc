@@ -20,4 +20,5 @@ int main(int ac, char **av)
 	std::cout << BLUE << "Waiting for connections..." << RESET << std::endl << std::endl;
 	IrcServer server(serverPort, serverPassword);
 	server.run();
+	return 0;
 }
