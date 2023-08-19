@@ -116,13 +116,7 @@ void    IrcServer::disconnectUserFromServer(int clientFd)
 		while (it != _Channels.end())
 		{
 			if (it->second.hasMember(*userToRemove))
-			{
 				it->second.removeMember(*userToRemove);
-				std::string quitMessage = "has left the server (reason :sudden disconnection";
-				std::string quitRPL = ":" + userToRemove->getNickname() + "!" + userToRemove->getUsername() + "@" + HOSTNAME + " QUIT :sudden disconnection\r\n";
-				it->second.sendMessageToUsers(quitMessage, userToRemove->getNickname());
-				safeSendMessage(clientFd, const_cast<char *>(quitRPL.c_str()));
-			}
 			if (it->second.isChannelOp(*userToRemove))
 				it->second.removeOperator(*userToRemove);
 			it++;

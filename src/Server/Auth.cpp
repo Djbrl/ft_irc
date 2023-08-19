@@ -18,8 +18,13 @@ void	IrcServer::quit(std::vector<std::string> &requestArguments, User &currentCl
 
 	//SEND QUIT RPL
 	for (size_t i = 1; i < requestArguments.size(); i++)
-		quitMessageReason += requestArguments[i] + " ";
-	quitMessage = "has left the server (reason " + quitMessageReason + ")";
+	{
+		if (i != requestArguments.size() - 1)
+			quitMessageReason += requestArguments[i] + " ";
+		else
+			quitMessageReason += requestArguments[i];
+	}
+	quitMessage = "has left the server (reason :" + quitMessageReason + ")";
 	quitRPL = ":" + currentClient.getNickname() + "!" + currentClient.getUsername() + "@" + HOSTNAME + " QUIT :" + requestArguments[1] + "\r\n";
 	safeSendMessage(clientFd, const_cast<char *>(quitRPL.c_str()));
 	//NOTIFY CHANNELS

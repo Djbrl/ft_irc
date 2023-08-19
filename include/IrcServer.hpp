@@ -62,6 +62,7 @@ class IrcServer : public AServer
 	int									checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient);
 	std::vector<std::string>			splitJoinArgument(std::string &argument);
 	std::vector<std::string>			parseChannels(std::vector<std::string> channels, User &currentClient);
+	void								handleSuddenDisconnection(int clientFd);
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	

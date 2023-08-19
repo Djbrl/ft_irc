@@ -17,7 +17,7 @@ void signalHandler(int signal)
 	}
 	if (signal == SIGPIPE)
 	{
-		std::cout << RED << "\n[WARNING : SIGPIPE shutdown request, ignoring...]" << RESET << std::endl;
+		std::cout << BWHITE << "\n[WARNING : SIGPIPE shutdown request, ignoring...]" << RESET << std::endl;
 		//signal triggered when attempting to write to a closed FD
 	}
 }
@@ -147,7 +147,42 @@ void	IrcServer::acceptClient()
 	}
 	return ;
 }
-
+void IrcServer::handleSuddenDisconnection(int clientFd)
+{
+		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
+		//NOTIFY USERS
+		std::map<std::string, Channel>::iterator	it = _Channels.begin();
+		User										*userToRemove = _ConnectedUsers.getUser(clientFd);		
+		if (userToRemove != NULL)
+		{
+			while (it != _Channels.end())
+			{
+				if (it->second.hasMember(*userToRemove))
+				{
+					std::string quitMessage = "has left the server (reason :sudden disconnection)";
+					it->second.sendMessageToUsers(quitMessage, userToRemove->getNickname());
+				}
+				it++;
+			}
+		}
+		//DELETE USER
+		disconnectUserFromServer(clientFd);
+		//DELETE CHANNELS THAT WILL BECOME EMPTY
+		std::vector<std::string> channelsToDelete;
+		for (std::map<std::string, Channel>::iterator it = _Channels.begin(); it != _Channels.end(); it++)
+		{
+			if (it->second.getMembersList().size() == 1)
+			{
+				//delayed delete to avoid segfault
+				channelsToDelete.push_back(it->first);
+				std::string noticeMessage = "NOTICE broadcast :" + it->first + " has been removed for inactivity" + "\r\n";
+				_ConnectedUsers.broadcastMessage(const_cast<char *>(noticeMessage.c_str()));
+			}
+		}
+		for (size_t i = 0; i < channelsToDelete.size(); i++)
+			_Channels.erase(channelsToDelete[i]);
+		return ;
+}
 void IrcServer::handleRequest(int clientFd)
 {
 	char	buffer[MESSAGE_BUFFER_SIZE] = {0};
@@ -158,26 +193,7 @@ void IrcServer::handleRequest(int clientFd)
 	//UNEXPECTED DISCONNECTION
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
 	if (bytes_received <= 0)
-	{
-		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
-		//CLEANUP AND NOTIFY USERS
-		disconnectUserFromServer(clientFd);
-		//DELETE CHANNELS THAT WILL BECOME EMPTY
-		std::vector<std::string> channelsToDelete;
-		for (std::map<std::string, Channel>::iterator it = _Channels.begin(); it != _Channels.end(); it++)
-		{
-			if (it->second.hasMember(*_ConnectedUsers.getUser(clientFd)) && it->second.getMembersList().size() == 1)
-			{
-				//delayed delete to avoid segfault
-				channelsToDelete.push_back(it->first);
-				std::string noticeMessage = "NOTICE broadcast :" + it->first + " has been removed for inactivity" + "\r\n";
-				_ConnectedUsers.broadcastMessage(const_cast<char *>(noticeMessage.c_str()));
-			}
-		}
-		for (size_t i = 0; i < channelsToDelete.size(); i++)
-			_Channels.erase(channelsToDelete[i]);
-		return;
-	}
+		handleSuddenDisconnection(clientFd);
 
 	User *current_user = _ConnectedUsers.getUser(clientFd);
 	if (!current_user)
