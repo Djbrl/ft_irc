@@ -108,6 +108,7 @@ void IrcServer::run()
 			}
 		}
 	}
+	return ;
 }
 
 void	IrcServer::acceptClient()
