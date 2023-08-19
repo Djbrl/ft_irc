@@ -24,15 +24,16 @@ std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketD
 
 void    IrcServer::safeSendMessage(int clientFd, char *message)
 {
-	int bytes;
-	int dataSent = 0;
-	int messageLen = strlen(message); //length of the message to be sent
+	int 		bytes;
+	int 		dataSent = 0;
+	int 		messageLen = strlen(message);
+	std::string messagePreview(message);
 
 	while (dataSent < messageLen)
 	{
 		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
 		{
-			std::cout << "Error : Couldn't send data to client." << std::endl;
+			std::cerr << "Error : Couldn't send message [" + messagePreview.substr(0, messagePreview.size()/2) + "...] to client." << std::endl;
 			return ;
 		}
 		dataSent += bytes;
@@ -42,18 +43,9 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 
 void    IrcServer::sendWelcomeMessage(int clientSocket)
 {
-	char welcomeMessage[512] = "Welcome to ft_IRC! Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
+	char welcomeMessage[512] = "You have successfully connected to ft_IRC! Authenticate with PASS <password> or \"/quote PASS <password>\" if you're using IRSSI.\n\r\n";
 	safeSendMessage(clientSocket, welcomeMessage);
 };
-
-void    IrcServer::sendServerResponse(int clientFd, char *message)
-{
-	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
-	{
-		if (g_clientSockets[i] == clientFd)
-			_serverResponses[g_clientSockets[i]] = message;
-	}
-}
 
 void    IrcServer::printSocketData(int clientSocket, char* socketData)
 {
@@ -71,10 +63,12 @@ void    IrcServer::addChannel(const std::string &channelName, User &owner)
 	std::map<std::string, Channel>::iterator it = _Channels.begin();
 	if (channelName.empty())
 		return ;
+
 	while (it != _Channels.end())
 	{
 		if (it->first == channelName)
 			return ;
+		it++;
 	}
 	_Channels[channelName] = Channel(channelName, owner);
 }
@@ -100,17 +94,32 @@ void	IrcServer::updateMemberInChannels(std::string &oldNick, User &target)
 
 //CLEAN UP___________________________________________________________________________________________________________
 
-void    IrcServer::clearFdFromList(int clientFd)
+void    IrcServer::disconnectUserFromServer(int clientFd)
 {
 	int j = 0;
+	std::map<std::string, Channel>::iterator	it = _Channels.begin();
+	User										*userToRemove = _ConnectedUsers.getUser(clientFd);
+
+	//REMOVE USER FROM ALL CHANNELS AND USERMAP
+	if (userToRemove != NULL)
+	{
+		while (it != _Channels.end())
+		{
+			if (it->second.hasMember(*userToRemove))
+				it->second.removeMember(*userToRemove);
+			if (it->second.isChannelOp(*userToRemove))
+				it->second.removeOperator(*userToRemove);
+			it++;
+		}
+		_ConnectedUsers.removeUser(clientFd);
+	}
+	//REMOVE FROM FD LISTS
 	for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 	{
 		if (clientFd == g_clientSockets[i])
 		{
 			FD_CLR(clientFd, &_clientsFdSet);
 			g_clientSockets.erase(g_clientSockets.begin() + j);
-			_serverResponses.erase(clientFd);
-			this->_ConnectedUsers.removeUser(clientFd);
 			close(clientFd);
 			return ;
 		}

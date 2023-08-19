@@ -42,9 +42,12 @@ void Channel::addMember(User& target)
 	_membersList.push_back(target);
 }
 
-void Channel::removeMember(User& target) {
-	for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it) {
-		if (*it == target) {
+void Channel::removeMember(User& target)
+{
+	for (std::vector<User>::iterator it = _membersList.begin(); it != _membersList.end(); ++it)
+	{
+		if (*it == target)
+		{
 			_membersList.erase(it);
 			break ;
 		}
@@ -55,6 +58,7 @@ void Channel::updateMemberNickname(std::string &oldNick, User &target)
 {
 	if (_channelOwner.getNickname() == oldNick)
 		_channelOwner = target;
+	//UPDATE IN MEMBER LIST
 	for (size_t i = 0; i < _membersList.size(); i++)
 	{
 		if (_membersList[i].getNickname() == oldNick)
@@ -63,6 +67,7 @@ void Channel::updateMemberNickname(std::string &oldNick, User &target)
 			return ;
 		}
 	}
+	//UPDATE IN OPERATOR LIST
 	for (size_t i = 0; i < _operatorsList.size(); i++)
 	{
 		if (_operatorsList[i].getNickname() == oldNick)
@@ -76,6 +81,18 @@ void Channel::updateMemberNickname(std::string &oldNick, User &target)
 
 void Channel::addMode(const std::string& mode) {
 	_modesList.push_back(mode);
+}
+
+void Channel::changeMode(const std::string &currentMode, const std::string &newMode)
+{
+	for (std::size_t i = 0; i < this->_modesList.size(); i++)
+	{
+		if (this->_modesList[i] == currentMode)
+		{
+			this->_modesList[i] = newMode;
+			return ;
+		}
+	}
 }
 
 void Channel::removeMode(const std::string& mode) {
@@ -120,6 +137,25 @@ void Channel::sendMessageToUsers(const std::string &messageToChannel, const std:
 	return;
 }
 
+void Channel::sendNoticeToUsers(const std::string &noticeToChannel, const std::string &author)
+{
+	std::string noticeMessage = "NOTICE " + author + " :" + noticeToChannel + "\r\n";
+
+	for (size_t i = 0; i < _membersList.size(); i++)
+	{
+		if (_membersList[i].getNickname() != author)
+		{
+			int bytes = send(_membersList[i].getSocket(), noticeToChannel.c_str(), noticeToChannel.size(), MSG_DONTWAIT);
+			if (bytes <= 0)
+			{
+				std::cout << "Error: Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
+				continue;
+			}
+			usleep(50000);
+		}
+	}
+	return;
+}
 
 void Channel::addMessageToHistory(const std::string &message)
 {
@@ -132,7 +168,7 @@ void Channel::showMessageHistory(User &target)
 	int			messageLen = 0;
 
 	for (int i = 0; i < (int)_messageHistory.size(); i++)
-		message += _messageHistory[i] + "\r\n"; // Add line break between messages
+		message += _messageHistory[i] + "\r\n";
 	messageLen = message.size();
 	int bytesSent = send(target.getSocket(), message.c_str(), messageLen, MSG_DONTWAIT);        
 	if (bytesSent == -1 || bytesSent < (int)message.size())
@@ -142,7 +178,12 @@ void Channel::showMessageHistory(User &target)
 	}
 }
 
+void Channel::removeChannelPassword() {
 
+	if (!this->_channelPassword.empty())
+		this->_channelPassword.clear();
+	return ;	
+}
 
 std::vector<User>::iterator	Channel::isAMember(const std::string &userName) {
 
@@ -159,26 +200,27 @@ std::string	Channel::printMemberList() const
 	std::string	memberList;
 	for (size_t i = 0; i < _membersList.size(); i++)
 	{
-		memberList += _membersList[i].getNickname() + ",";
+		memberList += _membersList[i].getNickname();
+		if(i + 1 < _membersList.size())
+			memberList += ",";
 	}
-	memberList.pop_back();
 	return memberList;
 }
 
 //BOOL_____________________________________________________________________________________________________
 
-bool Channel::hasMember(const User &target) const
+bool	Channel::hasMember(const User &target) const
 {
-	for (std::vector<User>::const_iterator it = _membersList.begin(); it != _membersList.end(); ++it)
+	for (std::size_t i = 0; i < _membersList.size(); i++)
 	{
-		if (*it == target)
+		if (_membersList[i] == target)
 			return (true);
 	}
 	return (false);
 }
 
-bool	Channel::isChannelOp(User &target) {
-
+bool	Channel::isChannelOp(User &target) const
+{
 	for (std::size_t i = 0; i < _operatorsList.size(); i++)
 	{
 		if (_operatorsList[i] == target)
@@ -187,10 +229,25 @@ bool	Channel::isChannelOp(User &target) {
 	return (false);
 }
 
+bool	Channel::findMode(std::string mode) const
+{
+	for (std::size_t i = 0; i < _modesList.size(); i++)
+	{
+		if (_modesList[i] == mode)
+			return (true);
+	}
+	return (false);
+}
+
+
 //GETTERS_____________________________________________________________________________________________________
 
 const std::string &Channel::getChannelName() const {
 	return _channelName;
+}
+
+const std::string &Channel::getChannelPassword() const {
+	return _channelPassword;
 }
 
 const std::string &Channel::getChannelTopic() const {

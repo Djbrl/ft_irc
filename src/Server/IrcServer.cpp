@@ -7,17 +7,6 @@ std::vector<int> g_clientSockets;
 //Signal handler for SIGINT, SIGTERM (kill signal) and SIGQUIT to avoid port-clogging on abrupt exit
 void signalHandler(int signal)
 {
-	//UNCOMMENT THIS WHEN /EXIT IS IMPLEMENTED
-	// if (signal == SIGINT)
-	// {
-	// 	std::cout << YELLOW << "SIGINT ignored, please type " << BWHITE << "/exit" << RESET << YELLOW << " to safely shutdown the server next time." << RESET << std::endl;
-	// 	return ;
-	// }
-	// if (signal == SIGQUIT)
-	// {
-	// 	std::cout << YELLOW << "SIGQUIT ignored, please type " << BWHITE << "/exit" << RESET << YELLOW << " to safely shutdown the server next time." << RESET << std::endl;
-	// 	return ;
-	// }
 	if (signal == SIGTERM || signal == SIGINT)
 	{
 		std::cout << YELLOW << "\n[IRC Server shutdown by SIGTERM Request, attempting graceful exit...]" << RESET << std::endl;
@@ -71,7 +60,7 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 IrcServer::~IrcServer()
 {
 	for (size_t i = 0; i < g_clientSockets.size(); i++)
-		close(g_clientSockets[i]);
+		disconnectUserFromServer(g_clientSockets[i]);
 	std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
 }
 
@@ -89,7 +78,6 @@ IrcServer &IrcServer::operator=(const IrcServer &cpy)
 		_serverPort = cpy._serverPort;
 		_serverPassword = cpy._serverPassword;
 		_serverSockAddr = cpy._serverSockAddr;
-		_serverResponses = cpy._serverResponses;
 		_clientsFdSet = cpy._clientsFdSet;
 		_ConnectedUsers = cpy._ConnectedUsers;
 		_Channels = cpy._Channels;
@@ -108,35 +96,21 @@ void IrcServer::run()
 	{
 		fd_set tmpSet = _clientsFdSet;
 		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1)
-		{
 			std::cerr << "Error : Problem with file descriptor set." << std::endl;
-		}
 		if (FD_ISSET(_serverFd, &tmpSet))
-		{
-			if (acceptClient() == -1)
-				std::cerr << "Error : Couldn't accept client." << std::endl;
-		} 
+			acceptClient();
 		else 
 		{
 			for (unsigned int i = 0; i < g_clientSockets.size(); i++)
 			{
 				if (FD_ISSET(g_clientSockets[i], &tmpSet))
-				{
 					handleRequest(g_clientSockets[i]);
-				}
 			}
 		}
 	}
 }
 
-void	IrcServer::handleCAPLS(int clientFd)
-{
-	std::string CAPLS = "CAP * LS :PASS NICK JOIN PRIVMSG PONG\r\n";
-	safeSendMessage(clientFd, const_cast<char *>(CAPLS.c_str()));	
-	return ;
-}
-
-int	IrcServer::acceptClient()
+void	IrcServer::acceptClient()
 {
 	std::string	clientIP;
 	sockaddr	clientSockAddr;
@@ -151,22 +125,15 @@ int	IrcServer::acceptClient()
 		FD_SET(dataSocketFd, &_clientsFdSet);
 		g_clientSockets.push_back(dataSocketFd);
 		clientIP = inet_ntoa(((struct sockaddr_in*)&clientSockAddr)->sin_addr);
-		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BYELLOW << clientIP << RESET << "." << std::endl;
-		char buf[MESSAGE_BUFFER_SIZE];
-		recv(dataSocketFd, buf, MESSAGE_BUFFER_SIZE, 0);
-		std::vector<std::string> request = splitStringByCRLF(std::string(buf));
-		std::stringstream iss(request[0]);
-		std::string word;
-		iss >> word;
-		if (word == "CAP")
-			handleCAPLS(dataSocketFd);
-		else
-			sendWelcomeMessage(dataSocketFd);
-		this->_ConnectedUsers.addUser(dataSocketFd);
-	} catch (const AcceptException& e) {
+		std::cout << Utils::getLocalTime() << "New client connection: [" << dataSocketFd << "] - " << BWHITE << clientIP << RESET << "." << std::endl;
+		_ConnectedUsers.addUser(dataSocketFd);
+		sendWelcomeMessage(dataSocketFd);
+	}
+	catch (const AcceptException& e)
+	{
 		std::cerr << e.what() << '\n';
 	}
-	return dataSocketFd;
+	return ;
 }
 
 void IrcServer::handleRequest(int clientFd)
@@ -175,18 +142,12 @@ void IrcServer::handleRequest(int clientFd)
 	int		bytes_received;
 
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
-	if (bytes_received == -1)
-	{
-		clearFdFromList(clientFd);
-		return;
-	}
-	if (bytes_received == 0)
+	if (bytes_received <= 0)
 	{
 		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
-		clearFdFromList(clientFd);
+		disconnectUserFromServer(clientFd);
 		return;
 	}
-	// printSocketData(clientFd, buffer);
     // parseQuery(clientFd, buffer);
     //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	std::vector<std::string> requests = splitStringByCRLF(buffer);

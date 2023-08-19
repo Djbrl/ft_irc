@@ -17,7 +17,6 @@ class IrcServer : public AServer
 	unsigned int						_serverPort;
 	std::string							_serverPassword;
 	sockaddr_in_t						_serverSockAddr;
-	std::map<int, std::string>			_serverResponses;
 	time_t								_serverCreationDate;
 	std::map<std::string, Channel>		_Channels;
 	fd_set								_clientsFdSet;
@@ -28,21 +27,40 @@ class IrcServer : public AServer
 										IrcServer(const unsigned int& portNumber, const std::string& password);
 										IrcServer(const IrcServer &cpy);
 	IrcServer							&operator=(const IrcServer &cpy);
+	
 	//METHODS__________________________________________________________________________________________________
+	
 	//CONNECTION
 	void								run();
-	int									acceptClient();
+	void								acceptClient();
+	
 	//PROTOTYPE
 	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
+	void								capls(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
+	void								user(std::vector<std::string> &requestArguments, User &currentClient);
 	void								join(std::vector<std::string> &requestArguments, User &currentClient);
+	void								list(std::vector<std::string> &requestArguments, User &currentClient);
+	void								part(std::vector<std::string> &requestArguments, User &currentClient);
+	void								quit(std::vector<std::string> &requestArguments, User &currentClient);
+	void								who(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
+	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
 	void								kick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								invite(std::vector<std::string> &requestArguments, User &currentClient);
 	void								topic(std::vector<std::string> &requestArguments, User &currentClient);
-	
+	void								mode(std::vector<std::string> &requestArguments, User &currentClient);
+	void								sortModes(std::vector<std::string> &requestArguments, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								compareModes(std::vector<std::string> &requestArguments, std::vector<std::string>	&newModes, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								dealWithSpecialModes(std::vector<std::string> &requestArguments, std::string &specialMode, std::map<std::string, Channel>::iterator channel, User &currentClient);
+	void								createChannel(const std::string &channelName, User &currentClient);
+	void								joinChannel(const std::string &channelName, User &currentClient);
+	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
+	int									checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient);
+	std::vector<std::string>			splitJoinArgument(std::string &argument);
+	std::vector<std::string>			parseChannels(std::vector<std::string> channels, User &currentClient);
 	//CHANNEL
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	
@@ -57,13 +75,11 @@ class IrcServer : public AServer
 	//PROCESS
 	void								sendWelcomeMessage(int clientSocket);
 	void   								safeSendMessage(int targeted_client, char *msg);
-	void   								sendServerResponse(int sender_fd, char *msg);
 	void								handleRequest(int clientFd);
 	
 	//UTILS
 	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
-	void								handleCAPLS(int clientFd);
-	void    							clearFdFromList(int client_fd);
+	void    							disconnectUserFromServer(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________
 	//SETTERS__________________________________________________________________________________________________
