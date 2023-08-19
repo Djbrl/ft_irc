@@ -171,7 +171,7 @@ void IrcServer::handleSuddenDisconnection(int clientFd)
 		std::vector<std::string> channelsToDelete;
 		for (std::map<std::string, Channel>::iterator it = _Channels.begin(); it != _Channels.end(); it++)
 		{
-			if (it->second.getMembersList().size() == 1)
+			if (it->second.getMembersList().size() == 0)
 			{
 				//delayed delete to avoid segfault
 				channelsToDelete.push_back(it->first);
@@ -197,7 +197,7 @@ void IrcServer::handleRequest(int clientFd)
 
 	User *current_user = _ConnectedUsers.getUser(clientFd);
 	if (!current_user)
-		throw std::exception();
+		return ;
 	
 	char *ubuffer = current_user->buffer;
 	char *position = std::find(ubuffer, ubuffer + MESSAGE_BUFFER_SIZE, '\0');
