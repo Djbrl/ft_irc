@@ -94,8 +94,8 @@ int main(int ac, char **av)
     //_________________________AUTHENTICATION_____________________________________________________________________________________________________________________________________________//
     for (int i = 0; i < nbTest ; i++)
     {
-        sleep(1);
-        // VALID AUTH TEST
+		//Avoids IRSSI flooding
+        //sleep(1);
         {
             int clientSocket = initClient(av, SERVER_PORT, SERVER_PASSWORD);
             if (clientSocket == -1)
@@ -133,12 +133,11 @@ int main(int ac, char **av)
     if (ko_count == 0)
         std::cout << GREEN << "AUTH TEST OK" << RESET << std::endl;
     //_________________________TESTING GROUND_____________________________________________________________________________________________________________________________________________//
-
+    // STANDBY
+	sleep(5);
     // CLEAN CLIENT FDS
     for (size_t i = 0; i < clients.size(); i++)
         close(clients[i]);
-
-    // STANDBY
-    while (true);
+	close(testingSession);
     return 0;
 }

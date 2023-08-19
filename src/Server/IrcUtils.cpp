@@ -116,7 +116,15 @@ void    IrcServer::disconnectUserFromServer(int clientFd)
 		while (it != _Channels.end())
 		{
 			if (it->second.hasMember(*userToRemove))
+			{
 				it->second.removeMember(*userToRemove);
+				if (it->second.getMembersList().size() == 0)
+				{
+					std::string noticeMessage = "NOTICE broadcast :" + it->first + " has been removed for inactivity" + "\r\n";
+					_Channels.erase(it->first);
+					_ConnectedUsers.broadcastMessage(const_cast<char *>(noticeMessage.c_str()));
+				}
+			}
 			if (it->second.isChannelOp(*userToRemove))
 				it->second.removeOperator(*userToRemove);
 			it++;

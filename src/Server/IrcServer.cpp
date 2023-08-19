@@ -17,11 +17,8 @@ void signalHandler(int signal)
 	}
 	if (signal == SIGPIPE)
 	{
-		std::cout << RED << "\n[IRC Server shutdown by SIGPIPE Request, an error occurred...]" << RESET << std::endl;
-		for (size_t i = 0; i < g_clientSockets.size(); i++)
-			close(g_clientSockets[i]);
-		std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
-		exit(EXIT_FAILURE);
+		std::cout << RED << "\n[WARNING : SIGPIPE shutdown request, ignoring...]" << RESET << std::endl;
+		//signal triggered when attempting to write to a closed FD
 	}
 }
 
