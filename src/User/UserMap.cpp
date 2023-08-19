@@ -48,6 +48,30 @@ User *UserMap::getUser(std::string &nickname)
     return user;
 }
 
+void UserMap::broadcastMessage(char *message)
+{
+    std::map<std::string, int>::iterator    it = this->nickname_to_socket.begin();
+	std::string                             messagePreview(message);
+	int 		                            messageLen = strlen(message);
+	int 		                            dataSent = 0;
+	int 		                            bytes;
+
+    while (it != nickname_to_socket.end())
+    {
+        dataSent = 0;
+        while (dataSent < messageLen)
+        {
+            if ((bytes = send(it->second, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
+            {
+                std::cerr << "Error : Couldn't send message [" + messagePreview.substr(0, messagePreview.size()/2) + "...] to client." << std::endl;
+                return ;
+            }
+            dataSent += bytes;
+        }
+        it++;
+    }    
+}
+
 //Remove a User by it's socket number, return false if it didn't find the User to remove, true if it found and and removed it
 bool UserMap::removeUser(int socket)
 {

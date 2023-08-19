@@ -60,7 +60,7 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 IrcServer::~IrcServer()
 {
 	for (size_t i = 0; i < g_clientSockets.size(); i++)
-		clearFdFromList(g_clientSockets[i]);
+		disconnectUserFromServer(g_clientSockets[i]);
 	std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
 }
 
@@ -145,7 +145,7 @@ void IrcServer::handleRequest(int clientFd)
 	if (bytes_received <= 0)
 	{
 		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
-		clearFdFromList(clientFd);
+		disconnectUserFromServer(clientFd);
 		return;
 	}
     // parseQuery(clientFd, buffer);

@@ -278,7 +278,7 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 										"ft_irc" + " " + channelName + " " + \
 										currentClient.getNickname() + " H :* " + currentClient.getRealname() + "\r\n";
 			std::string endWhoIsResponse =	":ft_irc 315 " + currentClient.getNickname() + " " + channelName + \
-											" :End of WHO list\r\n";
+											" :End of WHO\r\n";
 			std::string	RPLResponse = whoIsResponse + endWhoIsResponse;
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
 		}
@@ -289,6 +289,38 @@ void IrcServer::who(std::vector<std::string> &requestArguments, User &currentCli
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
 	return ;
 }
+
+void IrcServer::list(std::vector<std::string> &requestArguments, User &currentClient)
+{
+	(void)requestArguments;
+    if (currentClient.isAuthentificated())
+    {
+        std::map<std::string, Channel>::const_iterator it = _Channels.begin();
+        while (it != _Channels.end())
+        {
+			std::vector<std::string>	modesList = it->second.getModesList();
+			std::stringstream			nbUsers;
+            std::string					userList = it->second.printMemberList();
+            std::string					topic = it->second.getChannelTopic();
+			std::string					modes = "+";
+            Channel						channel = it->second;
+
+			nbUsers << channel.getMembersList().size();
+			for (size_t i = 0; i < modesList.size(); i++)
+				modes += modesList[i][1];
+            std::string listResponse =	":ft_irc 322 " + currentClient.getNickname() + " " + it->first + " " +
+                                    	nbUsers.str() + " " + "[" + modes + "]" + " :" + topic + "\r\n";
+            safeSendMessage(currentClient.getSocket(), const_cast<char *>(listResponse.c_str()));
+			it++;
+        }
+        std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of /LIST\r\n";
+        safeSendMessage(currentClient.getSocket(), const_cast<char *>(endListResponse.c_str()));
+    }
+    else
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+	return ;
+}
+
 
 void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &currentClient)
 {
@@ -432,10 +464,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 						}
 						isExistingChannel->second.removeMember(*isExistingUser);
 					}
-
-
 				}
-
 			}
 		}
 	}

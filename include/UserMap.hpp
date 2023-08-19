@@ -19,6 +19,7 @@ public:
     User *linkUserToNickname(std::string &nickname, int socket);
     User *getUser(int socket);
     User *getUser(std::string &nickname);
+    void broadcastMessage(char *message);
     bool removeUser(int socket);
     bool userExists(std::string &nickname);
     size_t   size() const;

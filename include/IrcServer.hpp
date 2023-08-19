@@ -41,7 +41,9 @@ class IrcServer : public AServer
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
 	void								user(std::vector<std::string> &requestArguments, User &currentClient);
 	void								join(std::vector<std::string> &requestArguments, User &currentClient);
+	void								list(std::vector<std::string> &requestArguments, User &currentClient);
 	void								part(std::vector<std::string> &requestArguments, User &currentClient);
+	void								quit(std::vector<std::string> &requestArguments, User &currentClient);
 	void								who(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
 	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
@@ -77,7 +79,7 @@ class IrcServer : public AServer
 	
 	//UTILS
 	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
-	void    							clearFdFromList(int client_fd);
+	void    							disconnectUserFromServer(int client_fd);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________
 	//SETTERS__________________________________________________________________________________________________
