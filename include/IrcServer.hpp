@@ -6,6 +6,7 @@
 # include "Channel.hpp"
 # include "User.hpp"
 # include "UserMap.hpp"
+# include "CommandParsing.hpp"
 
 //IRCSERVER CLASS____________________________________________________________________________________________________
 //IrcServer inherits from AServer, and carries all the methods and attributes needed for our IRC Server 
@@ -35,7 +36,7 @@ class IrcServer : public AServer
 	void								acceptClient();
 	
 	//PROTOTYPE
-	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *buffer);
+	void								dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::vector<std::string>);
 	void								capls(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pass(std::vector<std::string> &requestArguments, User &currentClient);
 	void								nick(std::vector<std::string> &requestArguments, User &currentClient);
@@ -78,8 +79,8 @@ class IrcServer : public AServer
 	void								handleRequest(int clientFd);
 	
 	//UTILS
-	std::vector<std::string>			splitStringByCRLF(const std::string &socketData);
 	void    							disconnectUserFromServer(int client_fd);
+	std::vector<std::string>			splitStringByCRLF(const std::string &socketData, char *buffer);
 	void								printSocketData(int clientSocket, char *socketData);
 	//GETTERS__________________________________________________________________________________________________
 	//SETTERS__________________________________________________________________________________________________

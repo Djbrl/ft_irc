@@ -20,6 +20,7 @@ class User
 		int							_socket;
 
 	public:
+		char						buffer[MESSAGE_BUFFER_SIZE];
 									User();
 									User(const std::string &name);
 									~User();

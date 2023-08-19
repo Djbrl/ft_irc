@@ -2,7 +2,7 @@
 
 //MESSAGES___________________________________________________________________________________________________________
 
-std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketData)
+std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketData, char *buffer)
 {
     std::vector<std::string> result;
 
@@ -15,9 +15,11 @@ std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketD
         startPos = delimiterPos + 2;
         delimiterPos = socketData.find("\r\n", startPos);
     }
+	memset(buffer, '\0', sizeof(*buffer) * MESSAGE_BUFFER_SIZE);
     if (startPos < socketData.length())
 	{
-        result.push_back(socketData.substr(startPos));
+        std::string last_in_buffer = socketData.substr(startPos);
+		memcpy(buffer, last_in_buffer.c_str(), std::min(size_t(MESSAGE_BUFFER_SIZE), last_in_buffer.size()));
     }
     return result;
 }
@@ -28,6 +30,13 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	int 		dataSent = 0;
 	int 		messageLen = strlen(message);
 	std::string messagePreview(message);
+
+	//Server log of what is sended
+	std::string nickname = "";
+	User *user = _ConnectedUsers.getUser(clientFd);
+	if (user != NULL)
+		nickname = user->getNickname();
+	std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << messageLen << "] message[" << message << "]" << std::endl;
 
 	while (dataSent < messageLen)
 	{

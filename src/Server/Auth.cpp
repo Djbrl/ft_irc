@@ -166,17 +166,14 @@ void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentCl
 	safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPL_PONG(requestArguments[1]).c_str()));
 }
 
-void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *socketData)
+
+void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::vector<std::string> requestArguments)
 {
-	std::vector<std::string> 	requestArguments;
-	std::stringstream			request(socketData);
 	std::string					argument;
 	User						*currentClient;
 
 	currentClient = _ConnectedUsers.getUser(clientFd);
-	//PUT ALL ARGUMENTS IN requestArguments VECTOR
-	while (request >> argument)
-		requestArguments.push_back(argument);
+
 	//RETURN IF PASS ISNT VALIDATED YET
 	if ((requestArguments[0] != "PASS" && !currentClient->hasPassword()) && requestArguments[0] != "CAP")
 	{
@@ -187,7 +184,10 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, char *s
 	if (requestArguments.size() < 2 && (requestArguments[0] != "LIST"))
 		return ;
 	//HANDLE COMMANDS
-	std::cout << "Handling command : [" << socketData << "]" << std::endl;
+	for (size_t i = 0; i < requestArguments.size(); i++)
+	{
+		std::cout << "Handling command : [" << i << "] = [" << requestArguments[i] << "]" << std::endl;
+	}
 	if (requestArguments[0] == "PASS")
 		pass(requestArguments, *currentClient);
 	else if (requestArguments[0] == "NICK")

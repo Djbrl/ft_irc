@@ -39,6 +39,11 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 		_serverSockAddr.sin_addr.s_addr = INADDR_ANY;
 		_serverSockAddr.sin_port = htons(_serverPort);
 		memset(_serverSockAddr.sin_zero, 0, sizeof(_serverSockAddr.sin_zero));
+		
+		//Prevent BindException when restarting the server
+		int opt = 1;
+		setsockopt(_serverFd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+
 		if (bind(_serverFd, (struct sockaddr *)&_serverSockAddr, sizeof(_serverSockAddr)) == -1)
 		{
 			close(_serverFd);
@@ -139,8 +144,9 @@ void	IrcServer::acceptClient()
 void IrcServer::handleRequest(int clientFd)
 {
 	char	buffer[MESSAGE_BUFFER_SIZE] = {0};
-	int		bytes_received;
+	ssize_t		bytes_received;
 
+	memset(buffer, 0, sizeof(buffer));
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
 	if (bytes_received <= 0)
 	{
@@ -148,13 +154,40 @@ void IrcServer::handleRequest(int clientFd)
 		disconnectUserFromServer(clientFd);
 		return;
 	}
+	User *current_user = _ConnectedUsers.getUser(clientFd);
+	if (!current_user)
+		throw std::exception();
+	
+	char *ubuffer = current_user->buffer;
+	char *position = std::find(ubuffer, ubuffer + MESSAGE_BUFFER_SIZE, '\0');
+
+	size_t buffer_size_left = MESSAGE_BUFFER_SIZE - std::distance(ubuffer, position);
+
+	size_t n_to_copy = std::min(size_t(bytes_received), buffer_size_left);
+	memcpy(position, buffer, n_to_copy);
     // parseQuery(clientFd, buffer);
     //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
-	std::vector<std::string> requests = splitStringByCRLF(buffer);
+	
+	std::cout << "buffer :" << buffer << std::endl;
+	std::cout << "user buffer :" << current_user->buffer << std::endl;
+	
+	if (buffer_size_left == 0 && std::string(buffer).find("\r\n", 0) == std::string::npos)
+		return ;
+	if (buffer_size_left != 0 && std::string(ubuffer).find("\r\n", 0) == std::string::npos)
+		return ;
+	std::vector<std::string> requests = splitStringByCRLF(std::string(ubuffer), ubuffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
-		// std::cout << "command in queue : " << requests[i] << "\n";
-		dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, const_cast<char *>(requests[i].c_str()));
+		std::cout << "command in queue [" << requests[i] << "]" << std::endl;
+		try
+		{
+			std::vector<std::string> args = parse_message(requests[i]);
+			dsy_cbarbit_AuthAndChannelMethodsPrototype(clientFd, args);
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << "Error parsing command: " << e.what() << '\n';
+		}
 	}
 	//AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	return ;
