@@ -193,12 +193,15 @@ void IrcServer::handleRequest(int clientFd)
 	//UNEXPECTED DISCONNECTION
 	bytes_received = recv(clientFd, buffer, MESSAGE_BUFFER_SIZE, 0);
 	if (bytes_received <= 0)
+	{
 		handleSuddenDisconnection(clientFd);
+		return ;
+	}
 
 	User *current_user = _ConnectedUsers.getUser(clientFd);
 	if (!current_user)
 		return ;
-	
+
 	char *ubuffer = current_user->buffer;
 	char *position = std::find(ubuffer, ubuffer + MESSAGE_BUFFER_SIZE, '\0');
 

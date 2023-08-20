@@ -339,7 +339,7 @@ void	IrcServer::privmsg(std::vector<std::string> &requestArguments, User &curren
 		if (isChannelName)
 		{
 			isExistingChannel = _Channels.find(channelName);
-			if (isExistingChannel != _Channels.end())
+			if (isExistingChannel != _Channels.end() && isExistingChannel->second.hasMember(currentClient))
 				_Channels[channelName].sendMessageToUsers(messageToChannel, currentClient.getNickname());
 			else
 				safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channelName).c_str()));
@@ -429,7 +429,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 			else
 			{
 				//check if the current user is channel operator
-				if (!isExistingChannel->second.isChannelOp(currentClient))
+				if (!isExistingChannel->second.isChannelOp(currentClient) && isExistingChannel->second.getChannelOwner().getNickname() != currentClient.getNickname())
 				{
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_CHANOPRIVSNEEDED(currentClient.getNickname(), channelName).c_str()));
 					return ;
@@ -438,7 +438,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 				{
 					//check if the user to remove is in the channel
 					isExistingUser = isExistingChannel->second.isAMember(userToRemove);
-					if (isExistingUser != isExistingChannel->second.getMembersList().end())
+					if (_Channels[requestArguments[1]].hasMember(*isExistingUser))
 					{
 						//remove member
 						std::string	messageToKicked;

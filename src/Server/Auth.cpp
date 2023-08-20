@@ -189,11 +189,13 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 	//RETURN IF INVALID ARG NUMBER
 	if (requestArguments.size() < 2 && (requestArguments[0] != "LIST"))
 		return ;
+	
 	//HANDLE COMMANDS
 	for (size_t i = 0; i < requestArguments.size(); i++)
 	{
 		std::cout << "Handling command : [" << i << "] = [" << requestArguments[i] << "]" << std::endl;
 	}
+
 	if (requestArguments[0] == "PASS")
 		pass(requestArguments, *currentClient);
 	else if (requestArguments[0] == "NICK")
