@@ -82,22 +82,21 @@ int main(int ac, char **av)
     }
 
     // INIT TESTING SESSION
-    int testingSession = initClient(av, SERVER_PORT, SERVER_PASSWORD);
-	if (testingSession == -1)
+    int ownerAccountSession = initClient(av, SERVER_PORT, SERVER_PASSWORD);
+	if (ownerAccountSession == -1)
 		return 1;
-    std::string nick = "TestingSessionClient";
+    std::string nick = "ownerAccountSessionClient";
     std::string uname = "session";
     std::string rname = "Testing Session";
     char CLIENT_REQ_SESSION[512] = {0};
     char CLIENT_REQ[2048] = {0};
 	char SERVER_RES[512] = {0};
     snprintf(CLIENT_REQ_SESSION, sizeof(CLIENT_REQ_SESSION), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\nJOIN #testSession\r\n", SERVER_PASSWORD.c_str(), nick.c_str(), uname.c_str(), rname.c_str());
-    send(testingSession, CLIENT_REQ_SESSION, strlen(CLIENT_REQ_SESSION), 0);
+    send(ownerAccountSession, CLIENT_REQ_SESSION, strlen(CLIENT_REQ_SESSION), 0);
 
     //_________________________START OF TESTING GROUND____________________________________________________________________________________________________________________________________//
     //_________________________AUTHENTICATION_____________________________________________________________________________________________________________________________________________//
 	//INIT CLIENTS
-	//AUTH TEST
 	for (int i = 0; i < nbTest ; i++)
     {
 		int clientSocket = initClient(av, SERVER_PORT, SERVER_PASSWORD);
@@ -107,28 +106,26 @@ int main(int ac, char **av)
 			return 1;
 		}
 
+		std::string nickname = "TesterClient";
+		std::string username = "test_client";
+		std::string realname = "Tester Client";
+
+		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\n", SERVER_PASSWORD.c_str(), nickname.c_str(), username.c_str(), realname.c_str());
+		send(clientSocket, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+
+		int bytes_received = recv(clientSocket, SERVER_RES, sizeof(SERVER_RES), 0);
+		if (bytes_received <= 0)
+			std::cout << "Server connection closed or error occurred" << std::endl;
+		std::string RES(SERVER_RES);
+		if (RES.substr(0, 14) != ":localhost 001")
 		{
-			std::string nickname = "TesterClient";
-			std::string username = "test_client";
-			std::string realname = "Tester Client";
-
-			snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PASS %s\r\nNICK %s\r\nUSER %s 0 * :%s\r\n", SERVER_PASSWORD.c_str(), nickname.c_str(), username.c_str(), realname.c_str());
-			send(clientSocket, CLIENT_REQ, strlen(CLIENT_REQ), 0);
-
-			int bytes_received = recv(clientSocket, SERVER_RES, sizeof(SERVER_RES), 0);
-			if (bytes_received <= 0)
-				std::cout << "Server connection closed or error occurred" << std::endl;
-			std::string RES(SERVER_RES);
-			if (RES.substr(0, 14) != ":localhost 001")
-			{
-				ko_count++;
-				std::cout << RED << "AUTH TEST KO" << RESET << " for " << CLIENT_REQ << std::endl;
-			}
+			ko_count++;
+			std::cout << RED << "AUTH TEST KO" << RESET << " for " << CLIENT_REQ << std::endl;
 		}
 		clients.push_back(clientSocket);
     }
 
-	//JOIN TEST
+    //_________________________JOIN_____________________________________________________________________________________________________________________________________________//
 	for (int i = 0; i < nbTest; i++)
 	{
 		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "JOIN #testSession\r\n");
@@ -145,7 +142,7 @@ int main(int ac, char **av)
 		}
 	}
 
-	//PRIVMSG TEST
+    //_________________________PRIVMSG_____________________________________________________________________________________________________________________________________________//
 	for (int i = 0; i < nbTest; i++)
 	{
 		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PRIVMSG #testSession hi\r\n");
@@ -155,29 +152,29 @@ int main(int ac, char **av)
 		if (bytes_received <= 0)
 			std::cout << "Server connection closed or error occurred." << std::endl;
 	}
-
+	//________________________MANUAL : replace "zac" and "zac_" with your clients nick on irssi___________________________________________________________
 	//INVITE TEST
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "MODE #testSession +it\r\nINVITE zac #testSession\r\nINVITE zac_ #testSession\r\n");
-	send(testingSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
 
 	sleep(15);
 	//KICK TEST
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "KICK #testSession zac u stink\r\n");
-	send(testingSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
 
 	//TOPIC TEST : FAIL
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "MODE #testSession +t\r\nTOPIC #testSession :zac u stink\r\n");
-	send(testingSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
 
-	//OPERATOR TEST
+	//OPERATOR TEST : FAIL
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "MODE #testSession +o zac_\r\n");
-	send(testingSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
 
-	//OPERATOR SET MODE K TEST
+	//OPERATOR SET MODE
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "MODE #testSession +k 42\r\n");
-	send(testingSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
 
-	//QUIT TEST
+    //_________________________QUIT_____________________________________________________________________________________________________________________________________________//
 	for (int i = 0; i < nbTest; i++)
 	{
 		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "QUIT :my job here is done\r\n");
@@ -195,8 +192,9 @@ int main(int ac, char **av)
     std::cout << "Enter any key to end the program." << YELLOW << "\nNote : Due to anti-flooding and the asynchronous nature of IRC servers, exiting before all messages are displayed by your client may end the test prematurily." << RESET << std::endl;
     std::string input;
     std::getline(std::cin, input);
+	//FREE CLIENTS
 	for (size_t i = 0; i < clients.size(); i++)
         close(clients[i]);
-	close(testingSession);
+	close(ownerAccountSession);
     return 0;
 }
