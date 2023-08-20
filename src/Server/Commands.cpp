@@ -274,10 +274,10 @@ void IrcServer::part(std::vector<std::string> &requestArguments, User &currentCl
 // 		if (channelName.size() > 1 && (channelName[0] == '#' || channelName[0] == '&'))
 // 		{
 // 			std::string userList = channel.printMemberList();
-// 			std::string whoIsResponse = ":ft_irc 352 " + currentClient.getNickname() + " " + channelName + " " + \
-// 										"ft_irc" + " " + channelName + " " + \
+// 			std::string whoIsResponse = ":ft_irc 352 " + currentClient.getNickname() + " " + channelName + " " +
+// 										"ft_irc" + " " + channelName + " " + 
 // 										currentClient.getNickname() + " H :* " + currentClient.getRealname() + "\r\n";
-// 			std::string endWhoIsResponse =	":ft_irc 315 " + currentClient.getNickname() + " " + channelName + \
+// 			std::string endWhoIsResponse =	":ft_irc 315 " + currentClient.getNickname() + " " + channelName + 
 // 											" :End of WHO\r\n";
 // 			std::string	RPLResponse = whoIsResponse + endWhoIsResponse;
 // 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
