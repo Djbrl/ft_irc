@@ -3,7 +3,7 @@
 void	IrcServer::capls(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	(void)requestArguments;
-	std::string CAPLS = "CAP * LS :PASS NICK JOIN PRIVMSG NOTICE KICK INVITE MODE PONG\r\n";
+	std::string CAPLS = "CAP * LS :PASS NICK USER JOIN PART LIST PRIVMSG NOTICE MODE KICK INVITE TOPIC PING QUIT\r\n";
 	safeSendMessage(currentClient.getSocket(), const_cast<char *>(CAPLS.c_str()));	
 }
 
@@ -206,8 +206,6 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 		join(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PART")
 		part(requestArguments, *currentClient);
-	else if (requestArguments[0] == "WHO")
-		who(requestArguments, *currentClient);
 	else if (requestArguments[0] == "LIST")
 		list(requestArguments, *currentClient);
 	else if (requestArguments[0] == "PRIVMSG" && requestArguments.size() > 2)

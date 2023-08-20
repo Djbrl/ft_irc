@@ -153,6 +153,7 @@ int main(int ac, char **av)
 			std::cout << "Server connection closed or error occurred." << std::endl;
 	}
 	//________________________MANUAL : replace "zac" and "zac_" with your clients nick on irssi___________________________________________________________
+	
 	//INVITE TEST
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "MODE #testSession +it\r\nINVITE zac #testSession\r\nINVITE zac_ #testSession\r\n");
 	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);

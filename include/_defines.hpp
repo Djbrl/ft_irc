@@ -91,7 +91,7 @@ void						signalHandler(int signal);
 # define ERR_UNKNOWNERROR(clientNickname, subcommand, info)         (":" + std::string(HOSTNAME) + " 400 " + clientNickname + " " + subcommand + " :" + info + "\r\n")
 # define ERR_NOSUCHNICK(clientNickname, nickNotFound)               (":" + std::string(HOSTNAME) + " 401 " + clientNickname + " " + nickNotFound + " :No such nick\r\n")
 # define ERR_NOSUCHCHANNEL(clientNickname, channel)		            (":" + std::string(HOSTNAME) + " 403 " + clientNickname + " " + channel + " :No such channel\r\n")
-# define ERR_NOTONCHANNEL(clientNickname, channel)                  (":" + std::string(HOSTNAME) + " 442 " + clientNickname + " " + channel + " :You're not on that channel\r\n")
+# define ERR_NOTONCHANNEL(clientNickname, channel)                  (":" + std::string(HOSTNAME) + " 442 " + clientNickname + " " + channel + " :You're not in that channel\r\n")
 # define ERR_USERONCHANNEL(clientNickname, nickToInvite, channel)   (":" + std::string(HOSTNAME) + " 443 " + clientNickname + " " + nickToInvite + " " + channel + " :is already on channel\r\n")
 # define ERR_NOTREGISTERED(clientNickname)				            (":" + std::string(HOSTNAME) + " 451 " + clientNickname + " :You have not registered\r\n")
 # define ERR_NEEDMOREPARAMS(clientNickname, command)				(":" + std::string(HOSTNAME) + " 461 " + clientNickname + " " + command + " :Not enough parameters\r\n")
@@ -99,7 +99,8 @@ void						signalHandler(int signal);
 # define ERR_PASSACCEPTED(clientNickname)				            (":" + std::string(HOSTNAME) + " 464 " + clientNickname + " :Password already sent\r\n")
 # define ERR_INVITEONLYCHAN(channel)                                (":" + std::string(HOSTNAME) + " 473 " + channel + " :Cannot join channel (+i)\r\n")
 # define ERR_BADCHANNELKEY(channel)                                 (":" + std::string(HOSTNAME) + " 475 " + channel + " :Cannot join channel (+k)\r\n")
-# define ERR_CHANOPRIVSNEEDED(clientNickname, channel)              (":" + std::string(HOSTNAME) + " 482 " + clientNickname + " " + channel + " :You're not channel operator\r\n")
-# define ERR_USERNOTINCHANNEL(clientNickname, channel)              (":" + std::string(HOSTNAME) + " 482 " + clientNickname + " " + channel + " :User not in channel\r\n")
+# define ERR_NOPRIVILEGES(clientNickname, channel)                  (":" + std::string(HOSTNAME) + " 481 " + clientNickname + " " + channel + " :You are not an IRC operator\r\n")
+# define ERR_CHANOPRIVSNEEDED(clientNickname, channel)              (":" + std::string(HOSTNAME) + " 482 " + clientNickname + " " + channel + " :You are not the original channel operator\r\n")
+# define ERR_USERNOTONCHANNEL(clientNickname, channel)              (":" + std::string(HOSTNAME) + " 482 " + clientNickname + " " + channel + " :User not in channel\r\n")
 
 #endif

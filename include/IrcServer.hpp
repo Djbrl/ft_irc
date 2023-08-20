@@ -45,7 +45,7 @@ class IrcServer : public AServer
 	void								list(std::vector<std::string> &requestArguments, User &currentClient);
 	void								part(std::vector<std::string> &requestArguments, User &currentClient);
 	void								quit(std::vector<std::string> &requestArguments, User &currentClient);
-	void								who(std::vector<std::string> &requestArguments, User &currentClient);
+	// void								who(std::vector<std::string> &requestArguments, User &currentClient);
 	void								privmsg(std::vector<std::string> &requestArguments, User &currentClient);
 	void								notice(std::vector<std::string> &requestArguments, User &currentClient);
 	void								pong(std::vector<std::string> &requestArguments, User &currentClient);
