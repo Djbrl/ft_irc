@@ -179,7 +179,8 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 	User						*currentClient;
 
 	currentClient = _ConnectedUsers.getUser(clientFd);
-
+	if (!currentClient)
+		return ;
 	//RETURN IF PASS ISNT VALIDATED YET
 	if ((requestArguments[0] != "PASS" && !currentClient->hasPassword()) && requestArguments[0] != "CAP")
 	{

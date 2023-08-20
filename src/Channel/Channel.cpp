@@ -167,7 +167,7 @@ void Channel::showMessageHistory(User &target)
 	std::string	message = "[Channel Chat History]\r\n";
 	int			messageLen = 0;
 
-	for (size_t i = _messageHistory.size(); i >= 0; i--)
+	for (size_t i = _messageHistory.size(); i > 0; i--)
 		message += _messageHistory[i] + "\r\n";
 	messageLen = message.size();
 	int bytesSent = send(target.getSocket(), message.c_str(), messageLen, MSG_DONTWAIT);        
