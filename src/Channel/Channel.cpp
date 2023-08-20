@@ -164,11 +164,19 @@ void Channel::addMessageToHistory(const std::string &message)
 
 void Channel::showMessageHistory(User &target)
 {
-	std::string	message = "[Channel Chat History]\r\n";
+	std::string	message = "";
 	int			messageLen = 0;
 
-	for (size_t i = _messageHistory.size(); i > 0; i--)
-		message += _messageHistory[i] + "\r\n";
+	if (_messageHistory.size() > 10)
+	{
+		for (size_t i = _messageHistory.size()- 10; i < _messageHistory.size(); i++)
+			message +=_messageHistory[i] + "\r\n";
+	}
+	else
+	{
+		for (size_t i = 0; i < _messageHistory.size(); i++)
+			message += _messageHistory[i] + "\r\n";
+	}
 	messageLen = message.size();
 	int bytesSent = send(target.getSocket(), message.c_str(), messageLen, MSG_DONTWAIT);        
 	if (bytesSent == -1 || bytesSent < (int)message.size())
