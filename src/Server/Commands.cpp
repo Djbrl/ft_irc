@@ -257,39 +257,6 @@ void IrcServer::part(std::vector<std::string> &requestArguments, User &currentCl
 	return ;
 }
 
-// void IrcServer::who(std::vector<std::string> &requestArguments, User &currentClient)
-// {
-// 	if (requestArguments[0] == "WHO" && currentClient.isAuthentificated())
-// 	{
-// 		//UNKNOWN CHANNEL
-// 		if (_Channels.find(requestArguments[1]) == _Channels.end())
-// 		{
-// 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
-// 			return ;
-// 		}
-
-// 		//SEND RESPONSE TO IRSSI
-// 		std::string	channelName = requestArguments[1];
-// 		Channel 	channel = _Channels[requestArguments[1]];
-// 		if (channelName.size() > 1 && (channelName[0] == '#' || channelName[0] == '&'))
-// 		{
-// 			std::string userList = channel.printMemberList();
-// 			std::string whoIsResponse = ":ft_irc 352 " + currentClient.getNickname() + " " + channelName + " " +
-// 										"ft_irc" + " " + channelName + " " + 
-// 										currentClient.getNickname() + " H :* " + currentClient.getRealname() + "\r\n";
-// 			std::string endWhoIsResponse =	":ft_irc 315 " + currentClient.getNickname() + " " + channelName + 
-// 											" :End of WHO\r\n";
-// 			std::string	RPLResponse = whoIsResponse + endWhoIsResponse;
-// 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
-// 		}
-// 		else
-// 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
-// 	}
-// 	else
-// 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-// 	return ;
-// }
-
 void IrcServer::list(std::vector<std::string> &requestArguments, User &currentClient)
 {
 	(void)requestArguments;
@@ -429,7 +396,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 			else
 			{
 				//check if the current user is channel operator
-				if (!isExistingChannel->second.isChannelOp(currentClient) && isExistingChannel->second.getChannelOwner().getNickname() != currentClient.getNickname())
+				if (!isExistingChannel->second.isChannelOp(currentClient))
 				{
 					std::string notice = "NOTICE " + channelName + " :kick: You are not an operator.\r\n";
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
@@ -437,33 +404,60 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 				}
 				else
 				{
-					//check if the user to remove is in the channel
 					isExistingUser = isExistingChannel->second.isAMember(userToRemove);
+					
+					//check if the user to remove is in the channel
 					if (_Channels[requestArguments[1]].hasMember(*isExistingUser))
 					{
-						//remove member
-						std::string	messageToKicked;
-						std::string messageToKicker = "User has successfully been removed !\r\n";
-						safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToKicker.c_str()));
-						
-						//send an explanation to the user who has been kicked out
-						if (requestArguments.size() > 3)
+						//check if the user is trying to kick himself
+						if (isExistingUser->getSocket() == currentClient.getSocket())
 						{
-							messageToKicked = "Reason for being kicked, according to Channel Operator ";
-							std::size_t	found;
-							if ((found = requestArguments[3].find(":")) == std::string::npos)
-								messageToKicked += ":";
-							for (int i = 3; i < (int)requestArguments.size(); i++)
-								messageToKicked += requestArguments[i] + " ";
-							messageToKicked += ".\r\n";
-							safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+							std::string notice = "NOTICE " + channelName + " :kick: You cannot kick yourself.\r\n";
+							safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+							return ;							
+						}
+						User	const &isChanOwner = isExistingChannel->second.getChannelOwner();
+						if (isChanOwner == *isExistingUser)
+						{
+							std::string notice = "NOTICE " + channelName + " :kick: You cannot kick the channel owner.\r\n";
+							safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+							return ;							
 						}
 						else
 						{
-							messageToKicked = "You have been kicked of channel " + requestArguments[1] + " by channel operator.\r\n";
-							safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+							//remove member
+							std::string	messageToKicked;
+							std::string messageToKicker = "User has successfully been removed !\r\n";
+							safeSendMessage(currentClient.getSocket(), const_cast<char*>(messageToKicker.c_str()));
+
+							//send an explanation to the user who has been kicked out
+							if (requestArguments.size() > 3)
+							{
+								messageToKicked = "Reason for being kicked, according to Channel Operator ";
+								std::size_t	found;
+								if ((found = requestArguments[3].find(":")) == std::string::npos)
+									messageToKicked += ":";
+								for (int i = 3; i < (int)requestArguments.size(); i++)
+									messageToKicked += requestArguments[i] + " ";
+								messageToKicked += ".\r\n";
+								safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+							}
+							else
+							{
+								messageToKicked = "You have been kicked of channel " + requestArguments[1] + " by channel operator.\r\n";
+								safeSendMessage(isExistingUser->getSocket(), const_cast<char*>(messageToKicked.c_str()));
+							}
+							isExistingChannel->second.removeMember(*isExistingUser);
+							//check if user is channel operator, if yes, also remove user from the _operatorsList
+							if (isExistingChannel->second.isChannelOp(*isExistingUser))
+								isExistingChannel->second.removeOperator(*isExistingUser);
 						}
-						isExistingChannel->second.removeMember(*isExistingUser);
+					}
+					else
+					{
+							std::string notice = "NOTICE " + channelName + " :kick: The member you want to kick is not on the channel.\r\n";
+							safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+							return ;						
 					}
 				}
 			}
@@ -655,15 +649,40 @@ void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments,
 				std::vector<User>::iterator newChanOp;
 				newChanOp = channel->second.isAMember(userToCheck);
 				//if the user is in the channel
-				if (mode == "+o" && newChanOp != channel->second.getMembersList().end())
+				if (newChanOp != channel->second.getMembersList().end())
 				{
+					if (mode == "+o" && !channel->second.isChannelOp(*newChanOp))
+					{
 						channel->second.addOperator(*newChanOp);
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user " + userToCheck + " was successfully added to channel operators list.\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
 						return ;
-				}
-				if (mode == "-o" && newChanOp != channel->second.getMembersList().end())
-				{
+					}
+					else if (mode == "+o" && channel->second.isChannelOp(*newChanOp))
+					{
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user is already an operator.\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+						return ;						
+					}
+					if (mode == "-o" && channel->second.isChannelOp(*newChanOp))
+					{
 						channel->second.removeOperator(*newChanOp);
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user " + userToCheck + " was successfully removed from channel operators list.\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
 						return ;
+					}
+					else
+					{
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user is not an operator.\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+						return ;						
+					}
+				}
+				else
+				{
+					std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user is not on the channel.\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+					return ;					
 				}
 			}
 		}
@@ -714,7 +733,8 @@ void	IrcServer::compareModes(std::vector<std::string> &requestArguments, std::ve
 		if (ret == -2)
 		{
 			dealWithSpecialModes(requestArguments, newModes[j], channel, currentClient); //deal with o and k
-			channel->second.addMode(newModes[j]);			
+			if (newModes[j] != "-o" && newModes[j] != "+o")
+				channel->second.addMode(newModes[j]);			
 		}
 		//the opposite mode of newMdoes[i] was found, need to change !
 		if (ret > -1)
@@ -793,10 +813,10 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 					//Let's perform the needed operations !
 					sortModes(requestArguments, isExistingChannel, currentClient);				
 					//TEST BELOW
-					// const std::vector<std::string>	&currentModes = isExistingChannel->second.getModesList();
-					// std::cout << "THE MODES ARE : " << std::endl;
-					// for (size_t i  = 0; i < currentModes.size(); i++)
-					// 	std::cout << currentModes[i] << std::endl;
+					const std::vector<std::string>	&currentModes = isExistingChannel->second.getModesList();
+					std::cout << "THE MODES ARE : " << std::endl;
+					for (size_t i  = 0; i < currentModes.size(); i++)
+						std::cout << currentModes[i] << std::endl;
 				}
 			}
 		}
