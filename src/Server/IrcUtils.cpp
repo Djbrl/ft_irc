@@ -29,7 +29,6 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	int 		bytes;
 	int 		dataSent = 0;
 	int 		messageLen = strlen(message);
-	std::string messagePreview(message);
 
 	//Server log of what is sended
 	std::string nickname = "";
@@ -37,12 +36,24 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	if (user != NULL)
 		nickname = user->getNickname();
 	std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << messageLen << "] message[" << message << "]" << std::endl;
+	
+	std::string messageNew(message, message + 510);
+	if (messageLen > 512) {
+		messageLen = 512;
+		std::cout << "WARNING: Message sended is more than 512 character, truncating the result" << std::endl;
+		messageNew.append("\r\n");
+		message[510] = '\r';
+		message[511] = '\n';
+		message[512] = '\0'; //even if length is 512 the message is 513 allocated in memory so the 513 byte can be NUL
+		std::cout << "WARNING: message is now [" << message << "]" << std::endl;
+	}
+	
 	//send message
 	while (dataSent < messageLen)
 	{
 		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
 		{
-			std::cerr << "Error : Couldn't send message [" + messagePreview.substr(0, messagePreview.size()/2) + "...] to client." << std::endl;
+			std::cerr << "Error : Couldn't send message [" << message << "...] to client." << std::endl;
 			disconnectUserFromServer(clientFd);
 			return ;
 		}
