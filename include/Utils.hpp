@@ -14,6 +14,7 @@ class Utils
 		static std::string	trimBackline(const std::string &request);
 		static bool         isEven(std::size_t index);
 		static bool         isOdd(std::size_t index);
+		static bool			isNum(const std::string limit);
 
 		//TEMPLATES__________________________________________________________________________________________________
 		template <typename T, typename P>

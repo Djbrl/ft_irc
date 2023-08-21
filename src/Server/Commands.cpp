@@ -79,6 +79,17 @@ int	IrcServer::checkChannelExceptions(std::map<std::string, Channel>::iterator	&
 {
 	std::string channelName = channel->second.getChannelName();
 	
+	//Look for +l in channel's mode
+	if (channel->second.findMode("+l"))
+	{
+		//check if we have reached the nb users limit
+		if (channel->second.getNbUserLimits() == channel->second.getMembersList().size())
+		{
+			std::string notice = "NOTICE " + channelName + " :join: You cannot join as the channel has reached the limit of users.\r\n";
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+			return (-1); //cannot join this channel
+		}
+	}
 	//Look for +i in channel's mode
 	if (channel->second.findMode("+i"))
 	{
@@ -169,51 +180,6 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 	else
 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
 }	
-	
-// 	if (requestArguments[0] == "JOIN" && currentClient.isAuthentificated())
-// 	{
-// 		bool isValidChannelName = requestArguments[1].size() > 1 && requestArguments[1][0] == '#';
-// 		if (isValidChannelName)
-// 		{
-// 			std::map<std::string, Channel>::iterator	isExistingChannel;
-// 			std::string									channelName = requestArguments[1];
-
-// 			//NEW CHANNEL
-// 			isExistingChannel = _Channels.find(channelName);
-// 			if (isExistingChannel == _Channels.end())
-// 			{
-// 				addChannel(channelName, currentClient);
-// 				std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ 
-// 											RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ 
-// 											RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
-// 				safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
-// 			}
-// 			//EXISTING CHANNEL
-// 			else
-// 			{
-// 				if (_Channels[channelName].hasMember(currentClient))
-// 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPL_ALREADYREGISTRED(currentClient.getNickname(), requestArguments[1]).c_str()));
-// 				else
-// 				{
-// 					std::string notification = "joined the channel";
-// 					_Channels[channelName].sendMessageToUsers(notification, currentClient.getNickname());
-// 					_Channels[channelName].addMember(currentClient);
-// 					std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic())		+ 
-// 												RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList())	+ 
-// 												RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
-// 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(RPLResponse.c_str()));
-// 					usleep(50000);
-// 					_Channels[channelName].showMessageHistory(currentClient);
-// 				}
-// 			}
-// 		}
-// 		else
-// 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), requestArguments[1]).c_str()));
-// 	}
-// 	else
-// 		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
-// 	return ;
-// }
 
 void IrcServer::part(std::vector<std::string> &requestArguments, User &currentClient)
 {
@@ -509,7 +475,18 @@ void	IrcServer::invite(std::vector<std::string> &requestArguments, User &current
 					else
 					{
 						User *invitedUser =  _ConnectedUsers.getUser(userToInvite);
-						//check channel's mode
+						//check channel's mode +l
+						if (isExistingChannel->second.findMode("+l"))
+						{
+							//check if we have reached the nb users limit
+							if (isExistingChannel->second.getNbUserLimits() == isExistingChannel->second.getMembersList().size())
+							{
+								std::string notice = "NOTICE " + channelName + " :invite: You cannot invite a new user to the channel as it has reached the limit of users.\r\n";
+								safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+								return ;
+							}
+						}
+						//check channel's mode +i
 						if (isExistingChannel->second.findMode("+i"))
 						{
 							//check that the current user is a channel operator
@@ -626,11 +603,12 @@ void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments,
 {
 	std::size_t	found_o = mode.find('o');
 	std::size_t	found_k = mode.find('k');
+	std::size_t	found_l = mode.find('l');
 
-	//either +o, -o, +k, -k
-	if (found_o != std::string::npos || found_k != std::string::npos)
+	//either +o, -o, +k, -k, +l, -l
+	if (found_o != std::string::npos || found_k != std::string::npos || found_l != std::string::npos)
 	{
-		if (requestArguments.size() != 4)
+		if (requestArguments.size() != 4 && mode != "-l")
 		{
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NEEDMOREPARAMS(currentClient.getNickname(), requestArguments[0]).c_str()));
 			return ;
@@ -683,6 +661,60 @@ void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments,
 					std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user is not on the channel.\r\n";
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
 					return ;					
+				}
+			}
+		}
+		if (mode == "+l" || mode == "-l")
+		{
+			if (mode == "+l")
+			{
+				//check that the fourth parameter is a digit
+				if (!Utils::isNum(requestArguments[3]))
+				{
+					std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: +l requires a digit.\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+					return ;						
+				}
+				else
+				{
+					int	usersLimit = atoi(requestArguments[3].c_str());
+					//check it does not go above int max and is not equal to 0 (impossible as there must be a channel operator)
+					if (usersLimit > 2147483647 || usersLimit < 1)
+					{
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: " + requestArguments[3] + " is completely off limits.\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+						return ;						
+					}
+					else
+					{
+						channel->second.setNbUserLimits(usersLimit);
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The users limit has been set to " + requestArguments[3] + ".\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+						return ;
+					}
+				}
+			}
+			if (mode == "-l")
+			{
+				if (requestArguments.size() > 3)
+				{
+					std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: Please remove fourth argument.\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+					return ;
+				}
+				else
+				{
+					//check if a limit has been set
+					if (channel->second.getNbUserLimits() != 0)
+					{
+						channel->second.setNbUserLimits(0);
+						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The users limit has been unset.\r\n";
+						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+						return ;
+					}
+					std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The users limit was already unset.\r\n";
+					safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+					return ;
 				}
 			}
 		}

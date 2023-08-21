@@ -18,6 +18,7 @@ class Channel
 		std::vector<std::string>    	_modesList;
 		std::vector<std::string>		_messageHistory;
 		User                        	_channelOwner;
+		std::size_t						_nbUsersLimit;
 
 	public:
 										Channel(const std::string &name, User &owner);
@@ -60,11 +61,13 @@ class Channel
 	const std::vector<User>				&getOperatorsList() const;
 	const std::vector<std::string>		&getModesList() const;
 	const std::vector<std::string>		&getMessageHistory() const;
+	const std::size_t						&getNbUserLimits() const;
 
     //SETTERS__________________________________________________________________________________________________
     void								setChannelName(const std::string &name);
     void								setChannelTopic(const std::string &topic);
     void								setChannelPassword(const std::string &password);
+	void								setNbUserLimits(std::size_t limit);
 };
 
 //EXTERN OPERATORS_____________________________________________________________________________________________

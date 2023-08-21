@@ -41,3 +41,13 @@ bool Utils::isOdd(std::size_t index)
 {
     return(index % 2 != 0);
 }
+
+bool	Utils::isNum(const std::string limit)
+{
+	for (std::size_t i = 0; i < limit.size(); i++)
+	{
+		if (isdigit(limit[i]) == 0)
+			return (false);
+	}
+	return (true);
+}

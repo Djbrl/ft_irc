@@ -10,6 +10,7 @@ Channel::Channel(const std::string &name, User &owner) : _channelName(name), _ch
 {
 	this->_operatorsList.push_back(owner); //add the creator of the channel to the operators list
 	this->_membersList.push_back(owner);
+	this->_nbUsersLimit = 0; //no limit set
 }
 
 Channel::Channel(const Channel &cpy)
@@ -283,18 +284,28 @@ const std::vector<std::string> &Channel::getMessageHistory() const
 	return _messageHistory;
 }
 
+const std::size_t	&Channel::getNbUserLimits() const
+{
+	return _nbUsersLimit;
+}
+
 //SETTERS_____________________________________________________________________________________________________
 
-void Channel::setChannelName(const std::string &name) {
+void	Channel::setChannelName(const std::string &name) {
 	_channelName = name;
 }
 
-void Channel::setChannelTopic(const std::string &topic) {
+void	Channel::setChannelTopic(const std::string &topic) {
 	_channelTopic = topic;
 }
 
-void Channel::setChannelPassword(const std::string &password) {
+void	Channel ::setChannelPassword(const std::string &password) {
 	_channelPassword = password;
+}
+
+void	Channel::setNbUserLimits(std::size_t limit) {
+
+	_nbUsersLimit = limit;
 }
 
 
