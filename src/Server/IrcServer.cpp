@@ -111,10 +111,13 @@ void IrcServer::run()
 	while (requestShutdown != true)
 	{
 		fd_set tmpSet = _clientsFdSet;
-		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1 && requestShutdown != true)
-			std::cerr << "Error : Problem with file descriptor set." << std::endl;
-		else
-			break ;
+		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1)
+		{
+			if (requestShutdown == true)
+				break ;
+			else
+				std::cerr << "Error: select() failed." << std::endl;
+		}
 		if (FD_ISSET(_serverFd, &tmpSet))
 			acceptClient();
 		else 
