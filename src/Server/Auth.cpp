@@ -227,5 +227,10 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 		quit(requestArguments, *currentClient);
 	else if (requestArguments[0] == "CAP" && requestArguments[1] == "LS" && requestArguments[1] == "302")
 		capls(requestArguments, *currentClient);
+	else
+	{
+		std::string notice = "NOTICE  :<command><space>[<param1><param2>...]: The command is not valid as it is.\r\n";
+		safeSendMessage(currentClient->getSocket(), const_cast<char *>(notice.c_str()));
+	}
 	return ;
 }

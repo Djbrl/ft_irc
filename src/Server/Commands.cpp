@@ -208,7 +208,7 @@ void IrcServer::part(std::vector<std::string> &requestArguments, User &currentCl
 				if (_Channels[channelName].getMembersList().size() == 0)
 				{
 					_Channels.erase(channelName);
-					std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + channelName + " has been removed for inactivity" + "\r\n";
+					std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + channelName + " has been removed for inactivity" + ".\r\n";
 					safeSendMessage(currentClient.getSocket(), const_cast<char *>(noticeMessage.c_str()));
 				}
 			}
@@ -242,11 +242,11 @@ void IrcServer::list(std::vector<std::string> &requestArguments, User &currentCl
 			for (size_t i = 0; i < modesList.size(); i++)
 				modes += modesList[i][1];
             std::string listResponse =	":ft_irc 322 " + currentClient.getNickname() + " " + it->first + " " +
-                                    	nbUsers.str() + " " + "[" + modes + "]" + " :" + topic + "\r\n";
+                                    	nbUsers.str() + " " + "[" + modes + "]" + " :" + topic + ".\r\n";
             safeSendMessage(currentClient.getSocket(), const_cast<char *>(listResponse.c_str()));
 			it++;
         }
-        std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of /LIST\r\n";
+        std::string endListResponse = ":ft_irc 323 " + currentClient.getNickname() + " :End of /LIST.\r\n";
         safeSendMessage(currentClient.getSocket(), const_cast<char *>(endListResponse.c_str()));
     }
     else
@@ -319,7 +319,7 @@ void	IrcServer::notice(std::vector<std::string> &requestArguments, User &current
 		{
 			if (_ConnectedUsers.getUser(requestArguments[1]) != NULL)
 			{
-				std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + messageToChannel + "\r\n";
+				std::string noticeMessage = "NOTICE " + requestArguments[1] + " :" + messageToChannel + ".\r\n";
 				safeSendMessage(_ConnectedUsers[requestArguments[1]].getSocket(), const_cast<char *>(noticeMessage.c_str()));
 			}
 			else
@@ -846,8 +846,11 @@ bool verifyModeString(std::string &modes_args) {
 void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentClient)
 {
 
-	if (verifyModeString(requestArguments[2]) == false) {
+	if (verifyModeString(requestArguments[2]) == false) 
+	{
 		std::cout << "MODE args are not right: [" << requestArguments[2] << "]" << std::endl;
+		std::string notice = "NOTICE :mode: Syntax is wrong. Try again.\r\n";
+		safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
 		return ;
 	}
 
@@ -893,10 +896,10 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 					//Let's perform the needed operations !
 					sortModes(requestArguments, isExistingChannel, currentClient);				
 					//TEST BELOW
-					const std::vector<std::string>	&currentModes = isExistingChannel->second.getModesList();
-					std::cout << "THE MODES ARE : " << std::endl;
-					for (size_t i  = 0; i < currentModes.size(); i++)
-						std::cout << currentModes[i] << std::endl;
+					// const std::vector<std::string>	&currentModes = isExistingChannel->second.getModesList();
+					// std::cout << "THE MODES ARE : " << std::endl;
+					// for (size_t i  = 0; i < currentModes.size(); i++)
+					// 	std::cout << currentModes[i] << std::endl;
 				}
 			}
 		}
