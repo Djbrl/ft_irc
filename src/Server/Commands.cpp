@@ -800,8 +800,56 @@ void	IrcServer::sortModes(std::vector<std::string> &requestArguments, std::map<s
 	compareModes(requestArguments, modesToSet, channel, currentClient);
 }
 
+bool is_sign(char c) {
+	return (c == '-' || c == '+');
+}
+
+//verify that all char are either mode flag or sign
+//a sign can't be followed by another sign
+//all char should be suported mode flag
+//A mode flag can't be set twice
+
+bool verifyModeString(std::string &modes_args) {
+	std::string modes_char("lkoti");
+	bool		modes_count[5] = {};
+
+	try
+	{
+		for (size_t i = 0; i < modes_args.size(); i++)
+		{
+			char &c = modes_args.at(i);
+			size_t pos = modes_char.find(c, 0);
+			if (pos != std::string::npos) { //look for a valid flag
+				if (modes_count[pos] == true) {
+					return false; //stop if some characters were set twice
+				}
+				modes_count[pos] = true;
+			}
+			else if (is_sign(c)) {
+				if (is_sign(modes_args.at(i + 1))) // Verify two sign in a row
+					return false;
+			}
+			else { //It's not a valid flag or a sign
+				return false;
+			}
+		}
+		if (!is_sign(modes_args.at(0)))
+			return false;
+	}
+	catch(const std::exception& e)
+	{
+		return false;
+	}
+	return true;
+}
+
 void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentClient)
 {
+
+	if (verifyModeString(requestArguments[2]) == false) {
+		std::cout << "MODE args are not right: [" << requestArguments[2] << "]" << std::endl;
+		return ;
+	}
 
 	//No need to verify if requestArguments[0] == "MODE" -> it is done below (HANDLE COMMANDS)
 	if (currentClient.isAuthentificated())
