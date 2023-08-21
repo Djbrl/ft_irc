@@ -66,6 +66,7 @@
 
 typedef struct sockaddr_in	sockaddr_in_t;
 extern std::vector<int>		g_clientSockets;
+extern bool                 requestShutdown;
 void						signalHandler(int signal);
 
 //NUMERIC REPLIES____________________________________________________________________________________________________
@@ -91,6 +92,7 @@ void						signalHandler(int signal);
 # define ERR_UNKNOWNERROR(clientNickname, subcommand, info)         (":" + std::string(HOSTNAME) + " 400 " + clientNickname + " " + subcommand + " :" + info + ".\r\n")
 # define ERR_NOSUCHNICK(clientNickname, nickNotFound)               (":" + std::string(HOSTNAME) + " 401 " + clientNickname + " " + nickNotFound + " :No such nick.\r\n")
 # define ERR_NOSUCHCHANNEL(clientNickname, channel)		            (":" + std::string(HOSTNAME) + " 403 " + clientNickname + " " + channel + " :No such channel.\r\n")
+# define ERR_UNKNOWNCOMMAND(clientNickname, command)                (":" + std::string(HOSTNAME) + " 421 " + clientNickname + " " + command + " :Unknown command.\r\n")
 # define ERR_NOTONCHANNEL(clientNickname, channel)                  (":" + std::string(HOSTNAME) + " 442 " + clientNickname + " " + channel + " :You're not in that channel.\r\n")
 # define ERR_USERONCHANNEL(clientNickname, nickToInvite, channel)   (":" + std::string(HOSTNAME) + " 443 " + clientNickname + " " + nickToInvite + " " + channel + " :is already on channel.\r\n")
 # define ERR_NOTREGISTERED(clientNickname)				            (":" + std::string(HOSTNAME) + " 451 " + clientNickname + " :You have not registered.\r\n")

@@ -2,30 +2,36 @@
 
 //EXTERN SIGNAL HANDLER__________________________________________________________________________________________________________________________
 //Header-level client socket lists
-std::vector<int> g_clientSockets;
+std::vector<int>	g_clientSockets;
+bool				requestShutdown;
 
 //Signal handler for SIGINT, SIGTERM (kill signal) and SIGQUIT to avoid port-clogging on abrupt exit
 void signalHandler(int signal)
 {
-	if (signal == SIGTERM || signal == SIGINT)
+	if (signal == SIGTERM)
 	{
-		std::cout << YELLOW << "\n[IRC Server shutdown by SIGTERM Request, attempting graceful exit...]" << RESET << std::endl;
+		std::cout << RED << "\n[IRC Server shutdown by SIGTERM Request, attempting graceful exit...]" << RESET << std::endl;
 		for (size_t i = 0; i < g_clientSockets.size(); i++)
 			close(g_clientSockets[i]);
-		std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
-		exit(EXIT_SUCCESS);
+		requestShutdown = true;
 	}
-	if (signal == SIGPIPE)
+	else if (signal == SIGINT)
 	{
-		std::cout << BWHITE << "\n[WARNING : SIGPIPE shutdown request, ignoring...]" << RESET << std::endl;
-		//signal triggered when attempting to write to a closed FD
+		std::cout << YELLOW << "\n[IRC Server shutdown by SIGINT Request, attempting graceful exit...]" << RESET << std::endl;
+		for (size_t i = 0; i < g_clientSockets.size(); i++)
+			close(g_clientSockets[i]);
+		requestShutdown = true;
 	}
+	else if (signal == SIGPIPE)
+		std::cout << YELLOW << "\n[WARNING : SIGPIPE shutdown request, ignoring...]" << RESET << std::endl;
+	return ;
 }
 
 //IRCSERVER CLASS______________________________________________________________________________________________________________________________________
 //IrcServer can't be instantiated using the default constructor
 IrcServer::IrcServer()
-{}
+{
+}
 
 IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password) : _serverFd(-1), _serverPort(portNumber),  _serverPassword(password), _serverCreationDate(time(NULL))
 {
@@ -34,6 +40,7 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 	std::signal(SIGQUIT, signalHandler);
 	std::signal(SIGTERM, signalHandler);
 	std::signal(SIGPIPE, signalHandler);
+	requestShutdown = false;
 	try
 	{
 		if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -70,8 +77,6 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 
 IrcServer::~IrcServer()
 {
-	for (size_t i = 0; i < g_clientSockets.size(); i++)
-		disconnectUserFromServer(g_clientSockets[i]);
 	std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
 }
 
@@ -103,11 +108,13 @@ void IrcServer::run()
 	FD_ZERO(&_clientsFdSet);
 	FD_SET(_serverFd, &_clientsFdSet);
 
-	while (true)
+	while (requestShutdown != true)
 	{
 		fd_set tmpSet = _clientsFdSet;
-		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1)
+		if (select(FD_SETSIZE, &tmpSet, NULL, NULL, NULL) == -1 && requestShutdown != true)
 			std::cerr << "Error : Problem with file descriptor set." << std::endl;
+		else
+			break ;
 		if (FD_ISSET(_serverFd, &tmpSet))
 			acceptClient();
 		else 
