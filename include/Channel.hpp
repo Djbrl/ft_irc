@@ -61,7 +61,7 @@ class Channel
 	const std::vector<User>				&getOperatorsList() const;
 	const std::vector<std::string>		&getModesList() const;
 	const std::vector<std::string>		&getMessageHistory() const;
-	const std::size_t						&getNbUserLimits() const;
+	const std::size_t					&getNbUserLimits() const;
 
     //SETTERS__________________________________________________________________________________________________
     void								setChannelName(const std::string &name);
