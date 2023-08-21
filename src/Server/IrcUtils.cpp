@@ -40,7 +40,7 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	std::string messageNew(message, message + 510);
 	if (messageLen > 512) {
 		messageLen = 512;
-		std::cout << "WARNING: Message sended is more than 512 character, truncating the result" << std::endl;
+		std::cout << "WARNING: Message sent is more than 512 characters, truncating the result" << std::endl;
 		messageNew.append("\r\n");
 		message[510] = '\r';
 		message[511] = '\n';
