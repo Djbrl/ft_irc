@@ -14,7 +14,7 @@ public:
 
     User& operator[](int socket);
     User& operator[](std::string nickname);
-    
+
     User *addUser(int socket); //Return the created User
     User *linkUserToNickname(std::string &nickname, int socket);
     User *getUser(int socket);

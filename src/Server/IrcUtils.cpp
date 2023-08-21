@@ -31,6 +31,7 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	int 		messageLen = strlen(message);
 
 	//Server log of what is sended
+	
 	std::string nickname = "";
 	User *user = _ConnectedUsers.getUser(clientFd);
 	if (user != NULL)

@@ -63,6 +63,7 @@ void	IrcServer::createChannel(const std::string &channelName, User &currentClien
 {
 	std::cout << "Channel does not exist" << std::endl;
 	addChannel(channelName, currentClient);
+	
 	std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic()) + 
 								RPL_NAMREPLY(currentClient.getNickname(), channelName, _Channels[channelName].printMemberList()) + 
 								RPL_ENDOFNAMES(currentClient.getNickname(), channelName);
@@ -347,6 +348,8 @@ void	IrcServer::notice(std::vector<std::string> &requestArguments, User &current
 
 void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentClient)
 {
+	if (_ConnectedUsers.getUser(currentClient.getSocket()) == NULL)
+		return ;
 	//No need to verify if requestArguments[0] == "KICK" -> it is done below (HANDLE COMMANDS)
 	if (currentClient.isAuthentificated())
 	{
@@ -384,7 +387,8 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 				else
 				{
 					isExistingUser = isExistingChannel->second.isAMember(userToRemove);
-					
+					if (isExistingUser == isExistingChannel->second.getMembersList().end())
+						return ;
 					//check if the user to remove is in the channel
 					if (_Channels[requestArguments[1]].hasMember(*isExistingUser))
 					{

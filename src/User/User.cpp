@@ -17,6 +17,9 @@ User::User(const std::string &name)
 {
 	_nickname = name;
 	_username = "";
+	_hostname = "";
+	_servername = "";
+	_realname = "";
 	_lastActiveTime = time(NULL);
 	_hasPassword = false;
 	_socket = -1;
@@ -38,6 +41,9 @@ User&	User::operator=(const User &cpy)
 	{
 		this->_nickname = cpy._nickname;
 		this->_username = cpy._username;
+		this->_username = cpy._realname;
+		this->_username = cpy._hostname;
+		this->_username = cpy._servername;
 		this->_socket = cpy._socket;
 		this->_channelsInvitedTo = cpy._channelsInvitedTo;
 		this->_lastActiveTime = cpy._lastActiveTime;
@@ -159,5 +165,5 @@ std::ostream	&operator<<(std::ostream &flux, const User& rhs)
 
 bool			User::operator==(const User& other) const
 {
-		return _nickname == other._nickname;
+	return _nickname == other._nickname;
 }
