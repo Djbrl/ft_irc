@@ -30,6 +30,17 @@ std::vector<std::string>	IrcServer::splitJoinArgument(std::string &argument)
 	return (splitArgument);
 }
 
+int	IrcServer::checkChannelChar(const char *channel)
+{
+	for (int i = 0; channel[i] != '\0'; i++)
+	{
+		if (channel[i] == 32 || channel[i] == 7 || channel[i] == 0
+			|| channel[i] == 13 || channel[i] == 10)
+			return (-1);
+	}
+	return (0);
+}
+
 std::vector<std::string>	IrcServer::parseChannels(std::vector<std::string> channels, User &currentClient)
 {
 	std::vector<std::string>	validChannels;
@@ -38,6 +49,8 @@ std::vector<std::string>	IrcServer::parseChannels(std::vector<std::string> chann
 	{
 		//check if channel's name is valid
 		if (channels[i].size() < 2 || (channels[i][0] != '#' && channels[i][0] != '&'))
+			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channels[i]).c_str()));
+		if (checkChannelChar(channels[i].c_str()) == -1)
 			safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOSUCHCHANNEL(currentClient.getNickname(), channels[i]).c_str()));
 		else
 			validChannels.push_back(channels[i]);
@@ -382,6 +395,7 @@ void	IrcServer::kick(std::vector<std::string> &requestArguments, User &currentCl
 							safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
 							return ;							
 						}
+						//check if user trying to kick channel operator
 						User	const &isChanOwner = isExistingChannel->second.getChannelOwner();
 						if (isChanOwner == *isExistingUser)
 						{
@@ -644,10 +658,20 @@ void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments,
 					}
 					if (mode == "-o" && channel->second.isChannelOp(*newChanOp))
 					{
+						User	const &isChanOwner = channel->second.getChannelOwner();
+						if (isChanOwner == *newChanOp)
+						{
+							std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: You cannot remove the operator privilege to the channel owner.\r\n";
+							safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
+							return ;							
+						}
+						else
+						{
 						channel->second.removeOperator(*newChanOp);
 						std::string notice = "NOTICE " + channel->second.getChannelName() + " :mode: The user " + userToCheck + " was successfully removed from channel operators list.\r\n";
 						safeSendMessage(currentClient.getSocket(), const_cast<char *>(notice.c_str()));
 						return ;
+						}
 					}
 					else
 					{

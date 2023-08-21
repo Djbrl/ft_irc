@@ -60,6 +60,7 @@ class IrcServer : public AServer
 	void								joinChannel(const std::string &channelName, User &currentClient);
 	int									modeWasFound(const std::vector<std::string> &currentMode, std::string &newMode);
 	int									checkChannelExceptions(std::map<std::string, Channel>::iterator	&channel, std::vector<std::string> passwords, std::size_t channelIndex, User &currentClient);
+	int									checkChannelChar(const char *channel);
 	std::vector<std::string>			splitJoinArgument(std::string &argument);
 	std::vector<std::string>			parseChannels(std::vector<std::string> channels, User &currentClient);
 	void								handleSuddenDisconnection(int clientFd);
