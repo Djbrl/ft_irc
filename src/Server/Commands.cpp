@@ -211,10 +211,13 @@ void IrcServer::part(std::vector<std::string> &requestArguments, User &currentCl
 				if (_Channels[channelName].getChannelOwner() == currentClient)
 				{
 					_Channels[channelName].sendMessageToUsers("(owner) has left the channel", currentClient.getNickname());
+					transferOwnership(_Channels[channelName]);
 					safeSendMessage(currentClient.getSocket(), RPL_PARTNOTICE(currentClient.getNickname(), channelName));		
 				}
 				else
 				{
+					if (_Channels[channelName].isChannelOp(currentClient))
+						_Channels[channelName].removeOperator(currentClient);
 					_Channels[channelName].sendMessageToUsers("left the channel", currentClient.getNickname());
 					safeSendMessage(currentClient.getSocket(), RPL_PARTNOTICE(currentClient.getNickname(), channelName));
 				}

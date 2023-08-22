@@ -64,6 +64,7 @@ class Channel
 	const std::size_t					&getNbUserLimits() const;
 
     //SETTERS__________________________________________________________________________________________________
+	void								setChannelOwner(User &newOwner);
     void								setChannelName(const std::string &name);
     void								setChannelTopic(const std::string &topic);
     void								setChannelPassword(const std::string &password);

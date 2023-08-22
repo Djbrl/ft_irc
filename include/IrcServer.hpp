@@ -65,6 +65,7 @@ class IrcServer : public AServer
 	std::vector<std::string>			parseChannels(std::vector<std::string> channels, User &currentClient);
 	void								handleSuddenDisconnection(int clientFd);
 	//CHANNEL
+	void								transferOwnership(Channel &chan);
 	void								addChannel(const std::string &channelName, User &owner);
 	void								removeChannel(const std::string &channelName);	
 	void								updateMemberInChannels(std::string &oldNick, User &target);

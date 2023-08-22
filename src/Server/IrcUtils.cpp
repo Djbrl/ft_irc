@@ -111,6 +111,27 @@ void	IrcServer::updateMemberInChannels(std::string &oldNick, User &target)
 
 //CLEAN UP___________________________________________________________________________________________________________
 
+void	IrcServer::transferOwnership(Channel &chan)
+{
+	if (chan.getOperatorsList().size() > 0)
+	{
+		User	newOwner = chan.getOperatorsList()[0];
+		chan.setChannelOwner(newOwner);
+		chan.sendMessageToUsers("ownership of the channel has been transfered to @" + newOwner.getNickname(), "server");
+		std::string notice = "NOTICE " + chan.getChannelName() + " You are now the channel owner.\r\n";
+		safeSendMessage(newOwner.getSocket(), notice);
+	}
+	else
+	{
+		User	newOwner = chan.getMembersList()[0];
+		chan.setChannelOwner(newOwner);
+		chan.sendMessageToUsers("owner left without operators to transfer ownership : the new owner is @" + newOwner.getNickname(), "server");
+		std::string notice = "NOTICE " + chan.getChannelName() + " You are now the channel owner.\r\n";
+		safeSendMessage(newOwner.getSocket(), notice);
+	}
+
+}
+
 void    IrcServer::disconnectUserFromServer(int clientFd)
 {
 	int j = 0;
@@ -126,6 +147,8 @@ void    IrcServer::disconnectUserFromServer(int clientFd)
 				it->second.removeMember(*userToRemove);
 			if (it->second.isChannelOp(*userToRemove))
 				it->second.removeOperator(*userToRemove);
+			if (*userToRemove == it->second.getChannelOwner())
+				transferOwnership(it->second);
 			it++;
 		}
 		_ConnectedUsers.removeUser(clientFd);

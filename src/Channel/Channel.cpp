@@ -291,6 +291,10 @@ const std::size_t	&Channel::getNbUserLimits() const
 
 //SETTERS_____________________________________________________________________________________________________
 
+void	Channel::setChannelOwner(User &newOwner) {
+	_channelOwner = newOwner;
+}
+
 void	Channel::setChannelName(const std::string &name) {
 	_channelName = name;
 }
