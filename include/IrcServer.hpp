@@ -77,7 +77,7 @@ class IrcServer : public AServer
 
 	//PROCESS
 	void								sendWelcomeMessage(int clientSocket);
-	void   								safeSendMessage(int targeted_client, char *msg);
+	void   								safeSendMessage(int targeted_client, std::string msg);
 	void								handleRequest(int clientFd);
 	
 	//UTILS

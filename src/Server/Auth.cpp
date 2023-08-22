@@ -4,7 +4,7 @@ void	IrcServer::capls(std::vector<std::string> &requestArguments, User &currentC
 {
 	(void)requestArguments;
 	std::string CAPLS = "CAP * LS :PASS NICK USER JOIN PART LIST PRIVMSG NOTICE MODE KICK INVITE TOPIC PING QUIT\r\n";
-	safeSendMessage(currentClient.getSocket(), const_cast<char *>(CAPLS.c_str()));	
+	safeSendMessage(currentClient.getSocket(), CAPLS);	
 }
 
 void	IrcServer::quit(std::vector<std::string> &requestArguments, User &currentClient)
@@ -26,7 +26,7 @@ void	IrcServer::quit(std::vector<std::string> &requestArguments, User &currentCl
 	}
 	quitMessage = "has left the server (reason :" + quitMessageReason + ")";
 	quitRPL = ":" + currentClient.getNickname() + "!" + currentClient.getUsername() + "@" + HOSTNAME + " QUIT :" + requestArguments[1] + "\r\n";
-	safeSendMessage(clientFd, const_cast<char *>(quitRPL.c_str()));
+	safeSendMessage(clientFd, quitRPL);
 	//NOTIFY CHANNELS
 	while (it != _Channels.end())
 	{
@@ -60,12 +60,12 @@ void	IrcServer::pass(std::vector<std::string> &requestArguments, User &currentCl
 			currentClient.setHasPassword(true);
 		else
 		{
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(ERR_PASSWDMISMATCH(currentClient.getNickname()).c_str()));
+			safeSendMessage(currentClient.getSocket(), ERR_PASSWDMISMATCH(currentClient.getNickname()));
 			return ;
 		}
 	}
 	else
-		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_PASSACCEPTED(currentClient.getNickname()).c_str()));
+		safeSendMessage(currentClient.getSocket(), ERR_PASSACCEPTED(currentClient.getNickname()));
 	return ;
 }
 
@@ -96,7 +96,7 @@ void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentCl
 									RPL_MYINFO(requestArguments[1]) +
 									stats;
 			
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLResponse.c_str()));
+			safeSendMessage(currentClient.getSocket(), RPLResponse);
 		}
 		else
 		{
@@ -109,7 +109,7 @@ void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentCl
 					return ;
 				updateMemberInChannels(oldNick, *updatedUser);
 				std::string RPLmessage = ":" + oldNick + " NICK " + requestArguments[1] + "\r\n";
-				safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLmessage.c_str()));
+				safeSendMessage(currentClient.getSocket(), RPLmessage);
 				return ;
 			}
 			//NEW CONNECTION
@@ -137,13 +137,13 @@ void	IrcServer::nick(std::vector<std::string> &requestArguments, User &currentCl
 											RPL_CREATED(newNickname, _serverCreationDate) + \
 											RPL_MYINFO(newNickname) + \
 											stats;
-				safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPLResponse.c_str()));
+				safeSendMessage(currentClient.getSocket(), RPLResponse);
 				return ;
 			}
 		}
 	}
 	else
-		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+		safeSendMessage(currentClient.getSocket(), ERR_NOTREGISTERED(currentClient.getNickname()));
 	return ;
 }
 
@@ -153,7 +153,7 @@ void	IrcServer::user(std::vector<std::string> &requestArguments, User &currentCl
 	{
 		if (requestArguments.size() < 5)
 		{
-			safeSendMessage(currentClient.getSocket(), const_cast<char*>(ERR_NEEDMOREPARAMS(currentClient.getNickname(), "USER").c_str()));
+			safeSendMessage(currentClient.getSocket(), ERR_NEEDMOREPARAMS(currentClient.getNickname(), "USER"));
 			return;
 		}
 		std::string username = requestArguments[1];
@@ -163,13 +163,13 @@ void	IrcServer::user(std::vector<std::string> &requestArguments, User &currentCl
 		currentClient.setUserInfo(username, hostname, servername, realname);
 	}
 	else
-		safeSendMessage(currentClient.getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient.getNickname()).c_str()));
+		safeSendMessage(currentClient.getSocket(), ERR_NOTREGISTERED(currentClient.getNickname()));
 	return ;
 }
 
 void	IrcServer::pong(std::vector<std::string> &requestArguments, User &currentClient)
 {
-	safeSendMessage(currentClient.getSocket(), const_cast<char*>(RPL_PONG(requestArguments[1]).c_str()));
+	safeSendMessage(currentClient.getSocket(), RPL_PONG(requestArguments[1]));
 }
 
 
@@ -184,7 +184,7 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 	//RETURN IF PASS ISNT VALIDATED YET
 	if ((requestArguments[0] != "PASS" && !currentClient->hasPassword()) && requestArguments[0] != "CAP")
 	{
-		safeSendMessage(currentClient->getSocket(), const_cast<char *>(ERR_NOTREGISTERED(currentClient->getNickname()).c_str()));
+		safeSendMessage(currentClient->getSocket(), ERR_NOTREGISTERED(currentClient->getNickname()));
 		return ;
 	}
 	//RETURN IF INVALID ARG NUMBER
@@ -228,6 +228,6 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 	else if (requestArguments[0] == "CAP" && requestArguments[1] == "LS")
 		capls(requestArguments, *currentClient);
 	else
-		safeSendMessage(currentClient->getSocket(), const_cast<char *>(ERR_UNKNOWNCOMMAND(currentClient->getNickname(), requestArguments[0]).c_str()));
+		safeSendMessage(currentClient->getSocket(), ERR_UNKNOWNCOMMAND(currentClient->getNickname(), requestArguments[0]));
 	return ;
 }

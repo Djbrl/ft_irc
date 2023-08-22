@@ -24,11 +24,10 @@ std::vector<std::string> IrcServer::splitStringByCRLF(const std::string &socketD
     return result;
 }
 
-void    IrcServer::safeSendMessage(int clientFd, char *message)
+void    IrcServer::safeSendMessage(int clientFd, std::string message)
 {
 	int 		bytes;
 	int 		dataSent = 0;
-	int 		messageLen = strlen(message);
 
 	//Server log of what is sended
 	
@@ -36,23 +35,19 @@ void    IrcServer::safeSendMessage(int clientFd, char *message)
 	User *user = _ConnectedUsers.getUser(clientFd);
 	if (user != NULL)
 		nickname = user->getNickname();
-	std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << messageLen << "] message[" << message << "]" << std::endl;
+	std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << message.size() << "] message[" << message << "]" << std::endl;
 	
-	std::string messageNew(message, message + 510);
-	if (messageLen > 512) {
-		messageLen = 512;
+	if (message.size() > 512) {
 		std::cout << "WARNING: Message sent is more than 512 characters, truncating the result" << std::endl;
-		messageNew.append("\r\n");
-		message[510] = '\r';
-		message[511] = '\n';
-		message[512] = '\0'; //even if length is 512 the message is 513 allocated in memory so the 513 byte can be NUL
+		message = message.substr(0, 510);
+		message += "\r\n";
 		std::cout << "WARNING: message is now [" << message << "]" << std::endl;
 	}
 	
 	//send message
-	while (dataSent < messageLen)
+	while (size_t(dataSent) < message.size())
 	{
-		if ((bytes = send(clientFd, message + dataSent, messageLen - dataSent, MSG_DONTWAIT)) <= 0)
+		if ((bytes = send(clientFd, message.c_str() + dataSent, message.size() - dataSent, MSG_DONTWAIT)) <= 0)
 		{
 			std::cerr << "Error : Couldn't send message [" << message << "...] to client." << std::endl;
 			disconnectUserFromServer(clientFd);
