@@ -19,7 +19,7 @@ RESET =		\033[0m
 
 CC =			c++
 CFLAGS =		-Wall -Wextra -Werror -std=c++98 -g3 #-fsanitize=address
-NAME =			ircserver
+NAME =			ircserv
 BUILD_PATH =	build/
 
 SRCS = src/main.cpp src/Server/AServer.cpp src/Server/IrcServer.cpp		\
