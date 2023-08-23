@@ -10,7 +10,7 @@ int main(int ac, char **av)
 
 	unsigned int	serverPort(atoi(av[1]));
 	std::string		serverPassword(av[2]);
-	if ((serverPort == 0 && av[2] != std::string("0")) || serverPassword.empty())
+	if (serverPort < 1024 || serverPort > 65536 || serverPassword.empty())
 	{
 		std::cout << "Error: Invalid port or empty password." << std::endl;
 		return 1;
