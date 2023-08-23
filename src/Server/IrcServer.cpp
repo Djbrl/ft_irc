@@ -231,11 +231,17 @@ void IrcServer::handleRequest(int clientFd)
 	// std::cout << "buffer :" << buffer << std::endl;
 	// std::cout << "user buffer :" << current_user->buffer << std::endl;
 	
-	if (buffer_size_left == 0 && std::string(buffer).find("\r\n", 0) == std::string::npos)
+	if (buffer_size_left == 0 && std::string(buffer, 512).find("\r\n", 0) == std::string::npos)
 		return ;
-	if (buffer_size_left != 0 && std::string(ubuffer).find("\r\n", 0) == std::string::npos)
+	if (buffer_size_left != 0 && std::string(ubuffer, 512).find("\r\n", 0) == std::string::npos)
 		return ;
-	std::vector<std::string> requests = splitStringByCRLF(std::string(ubuffer), ubuffer);
+
+	if (buffer_size_left == 0 && std::string(buffer, 512).find("\r\n", 0) != std::string::npos)
+	{
+		ubuffer[510] = '\r';
+		ubuffer[511] = '\n';
+	}
+	std::vector<std::string> requests = splitStringByCRLF(std::string(ubuffer, 512), ubuffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
 		std::cout << Utils::getLocalTime() << "Received request [" << requests[i] << "] from " << "[" << clientFd << "]" << std::endl;

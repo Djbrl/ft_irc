@@ -145,9 +145,11 @@ int main(int ac, char **av)
     //_________________________PRIVMSG_____________________________________________________________________________________________________________________________________________//
 	for (int i = 0; i < nbTest; i++)
 	{
-		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PRIVMSG #testSession hi\r\n");
+		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PRIVMSG #test");
 		send(clients[i], CLIENT_REQ, strlen(CLIENT_REQ), 0);
-
+		sleep(2);
+		snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "Session hi\r\n");
+		send(clients[i], CLIENT_REQ, strlen(CLIENT_REQ), 0);
 		int bytes_received = recv(clients[i], SERVER_RES, sizeof(SERVER_RES), 0);
 		if (bytes_received <= 0)
 			std::cout << "Server connection closed or error occurred." << std::endl;
@@ -174,6 +176,20 @@ int main(int ac, char **av)
 	//OPERATOR SET MODE
 	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "MODE #testSession +k 42\r\n");
 	send(ownerAccountSession, CLIENT_REQ, strlen(CLIENT_REQ), 0);
+
+	size_t i = 0;
+	for (i = 0; i < 900; i++)
+	{
+		CLIENT_REQ[i] = (i % 10 + '0');
+	}
+	CLIENT_REQ[i++] = '\r';
+	CLIENT_REQ[i++] = '\n';
+	CLIENT_REQ[i++] = '\0';
+	memcpy(CLIENT_REQ, "PRIVMSG #testSession :", 22);
+	std::cout << CLIENT_REQ << std::endl;
+	send(clients[0], CLIENT_REQ, strlen(CLIENT_REQ), 0);
+	snprintf(CLIENT_REQ, sizeof(CLIENT_REQ), "PRIVMSG #testSession :HAHA JE BUG\r\n");
+
 
     //_________________________QUIT_____________________________________________________________________________________________________________________________________________//
 	for (int i = 0; i < nbTest; i++)
