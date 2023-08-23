@@ -182,14 +182,6 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 			}
 
 		}
-
-		// //TEST channel
-		// 	for (std::size_t i = 0; i < validChannels.size(); i++)
-		// 		std::cout << "CHAN is : " << validChannels[i] << std::endl;
-
-		// //TEST password
-		// 	for (std::size_t i = 0; i < passwords.size(); i++)
-		// 		std::cout << "PASS is : " << passwords[i] << std::endl;
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), ERR_NOTREGISTERED(currentClient.getNickname()));
@@ -755,8 +747,6 @@ void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments,
 			if (mode == "+k")
 			{
 				channel->second.setChannelPassword(channelPassword);
-				//TEST BELOW
-				// std::cout << "Channel's password is: " << channel->second.getChannelPassword();
 				return ;
 			}
 			else if (mode == "-k")
@@ -879,7 +869,6 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 
 	if (verifyModeString(requestArguments[2]) == false) 
 	{
-		// std::cout << "MODE args are not right: [" << requestArguments[2] << "]" << std::endl;
 		std::string notice = "NOTICE :mode: Syntax is wrong. Try again.\r\n";
 		safeSendMessage(currentClient.getSocket(), notice);
 		return ;
@@ -925,12 +914,7 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 				else
 				{
 					//Let's perform the needed operations !
-					sortModes(requestArguments, isExistingChannel, currentClient);				
-					//TEST BELOW
-					// const std::vector<std::string>	&currentModes = isExistingChannel->second.getModesList();
-					// std::cout << "THE MODES ARE : " << std::endl;
-					// for (size_t i  = 0; i < currentModes.size(); i++)
-					// 	std::cout << currentModes[i] << std::endl;
+					sortModes(requestArguments, isExistingChannel, currentClient);
 				}
 			}
 		}
