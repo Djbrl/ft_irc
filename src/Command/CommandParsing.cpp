@@ -100,7 +100,7 @@ std::vector<std::string> parse_message(std::string str)
         expect_params(str, i, params);
     }
     
-    if (i < str.size())
-        std::cout << "Didn't read all of the message" << std::endl;
+    // if (i < str.size())
+    //     std::cout << "Didn't read all of the message" << std::endl;
     return params;
 }

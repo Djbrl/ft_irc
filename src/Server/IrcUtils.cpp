@@ -29,19 +29,17 @@ void    IrcServer::safeSendMessage(int clientFd, std::string message)
 	int 		bytes;
 	int 		dataSent = 0;
 
-	//Server log of what is sended
-	
 	std::string nickname = "";
 	User *user = _ConnectedUsers.getUser(clientFd);
 	if (user != NULL)
 		nickname = user->getNickname();
-	std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << message.size() << "] message[" << message << "]" << std::endl;
+	// std::cout << "SafeSend: fd[" << clientFd << "] nick[" << nickname << "] len[" << message.size() << "] message[" << message << "]" << std::endl;
 	
 	if (message.size() > 512) {
-		std::cout << "WARNING: Message sent is more than 512 characters, truncating the result" << std::endl;
+		std::cout << Utils::getLocalTime() << "Warning : Message sent is more than 512 characters, truncating the result" << std::endl;
 		message = message.substr(0, 510);
 		message += "\r\n";
-		std::cout << "WARNING: message is now [" << message << "]" << std::endl;
+		std::cout << Utils::getLocalTime() << "Warning : message is now [" << message << "]" << std::endl;
 	}
 	
 	//send message
@@ -49,7 +47,7 @@ void    IrcServer::safeSendMessage(int clientFd, std::string message)
 	{
 		if ((bytes = send(clientFd, message.c_str() + dataSent, message.size() - dataSent, MSG_DONTWAIT)) <= 0)
 		{
-			std::cerr << "Error : Couldn't send message [" << message << "...] to client." << std::endl;
+			std::cerr << "Error : Couldn't send message [" << message << "...] to client [" << clientFd << "]" << std::endl;
 			disconnectUserFromServer(clientFd);
 			return ;
 		}

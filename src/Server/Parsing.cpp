@@ -12,13 +12,13 @@ std::string     IrcServer::parsePassCommand(int clientFd, std::stringstream &com
 	//printing vector to test
 	// for (std::size_t i = 0; i < wordSplit.size(); i++)
 	//     std::cout << wordSplit[i] << std::endl;
-	if (wordSplit.size() == 0)
-		std::cout << "Password missing !" << std::endl;
+	// if (wordSplit.size() == 0)
+	// 	std::cout << "Password missing !" << std::endl;
 	for (std::size_t i = 0; i < wordSplit.size(); i++)
 	{
 		if ((Utils::isEven(i) && wordSplit[i] == PASS) || (Utils::isOdd(i) && wordSplit[i] != PASS))
 		{
-			std::cerr << "Error : SOMETHING WRONG WITH PASSWORD." << std::endl;
+			// std::cerr << "Error : SOMETHING WRONG WITH PASSWORD." << std::endl;
 			return ("");
 		}
 	}
@@ -35,7 +35,7 @@ void    IrcServer::passCommand(int clientFd, std::string passCommand, std::strin
 				|| passCommand.find(INVITE) != std::string::npos || passCommand.find(MODE) != std::string::npos 
 				|| passCommand.find(TOPIC) != std::string::npos || passCommand.find(KICK) != std::string::npos)
 			{
-				std::cerr << "Error : There cannot be different commands." << std::endl;
+				// std::cerr << "Error : There cannot be different commands." << std::endl;
 				return ;
 			}
 			if (!(clientPassword = parsePassCommand(clientFd, commandCopy)).empty())
@@ -44,11 +44,11 @@ void    IrcServer::passCommand(int clientFd, std::string passCommand, std::strin
 				{
 					//add user to connected users
 					//set user authenticated status to true
-					std::cout << "PASSWORD OK !" << std::endl;
+					// std::cout << "PASSWORD OK !" << std::endl;
 				}
 				else
 				{
-					std::cerr << "Error : SOMETHING WRONG WITH PASSWORD." << std::endl;
+					// std::cerr << "Error : SOMETHING WRONG WITH PASSWORD." << std::endl;
 					return ;
 				}
 			}
@@ -97,11 +97,12 @@ void	IrcServer::parseQuery(int clientFd, std::string clientQuery) {
 	std::size_t end, found;
 	std::string subQuery;
 
+	(void)queryLen;
 	//check basics
-	if (queryLen > 512)
-		std::cerr << " Error : Client's request is too long. " << std::endl;
-	if (clientQuery[queryLen - 2] != '\r' || clientQuery[queryLen - 1] != '\n')
-		std::cerr << "Error : Client's request does not end with the appropriate characters." << std::endl;
+	// if (queryLen > 512)
+	// 	std::cerr << " Error : Client's request is too long. " << std::endl;
+	// if (clientQuery[queryLen - 2] != '\r' || clientQuery[queryLen - 1] != '\n')
+	// 	std::cerr << "Error : Client's request does not end with the appropriate characters." << std::endl;
 	//ignore spaces
 	// while (clientQuery[start] == ' ')
 	// 	start++;
@@ -119,15 +120,15 @@ void	IrcServer::parseQuery(int clientFd, std::string clientQuery) {
 		// }
 		//extract each command until the next "\r\n"
 		subQuery = clientQuery.substr(start, end - start);
-		std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
+		// std::cout << "Substring : " << " [" <<subQuery << "]" << std::endl;
 
 		try
 		{
 			std::vector<std::string> args = parse_message(subQuery);
-			for (size_t i = 0; i < args.size(); i++)
-			{
-				std::cout << "[" << i << "] = " << args[i] << std::endl;
-			}
+			// for (size_t i = 0; i < args.size(); i++)
+			// {
+			// 	std::cout << "[" << i << "] = " << args[i] << std::endl;
+			// }
 		}
 		catch(const std::exception& e)
 		{

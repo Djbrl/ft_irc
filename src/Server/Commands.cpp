@@ -61,7 +61,7 @@ std::vector<std::string>	IrcServer::parseChannels(std::vector<std::string> chann
 
 void	IrcServer::createChannel(const std::string &channelName, User &currentClient)
 {
-	std::cout << "Channel does not exist" << std::endl;
+	// std::cout << "Channel does not exist" << std::endl;
 	addChannel(channelName, currentClient);
 	
 	std::string RPLResponse =	RPL_TOPIC(currentClient.getNickname(), channelName, _Channels[channelName].getChannelTopic()) + 
@@ -72,7 +72,7 @@ void	IrcServer::createChannel(const std::string &channelName, User &currentClien
 
 void	IrcServer::joinChannel(const std::string &channelName, User &currentClient)
 {
-	std::cout << "Channel already exists" << std::endl;
+	// std::cout << "Channel already exists" << std::endl;
 	if (_Channels[channelName].hasMember(currentClient))
 		safeSendMessage(currentClient.getSocket(), RPL_ALREADYREGISTRED(currentClient.getNickname(), channelName));
 	else
@@ -183,13 +183,13 @@ void IrcServer::join(std::vector<std::string> &requestArguments, User &currentCl
 
 		}
 
-		//TEST channel
-			for (std::size_t i = 0; i < validChannels.size(); i++)
-				std::cout << "CHAN is : " << validChannels[i] << std::endl;
+		// //TEST channel
+		// 	for (std::size_t i = 0; i < validChannels.size(); i++)
+		// 		std::cout << "CHAN is : " << validChannels[i] << std::endl;
 
-		//TEST password
-			for (std::size_t i = 0; i < passwords.size(); i++)
-				std::cout << "PASS is : " << passwords[i] << std::endl;
+		// //TEST password
+		// 	for (std::size_t i = 0; i < passwords.size(); i++)
+		// 		std::cout << "PASS is : " << passwords[i] << std::endl;
 	}
 	else
 		safeSendMessage(currentClient.getSocket(), ERR_NOTREGISTERED(currentClient.getNickname()));
@@ -756,7 +756,7 @@ void	IrcServer::dealWithSpecialModes(std::vector<std::string> &requestArguments,
 			{
 				channel->second.setChannelPassword(channelPassword);
 				//TEST BELOW
-				std::cout << "Channel's password is: " << channel->second.getChannelPassword();
+				// std::cout << "Channel's password is: " << channel->second.getChannelPassword();
 				return ;
 			}
 			else if (mode == "-k")
@@ -879,7 +879,7 @@ void	IrcServer::mode(std::vector<std::string> &requestArguments, User &currentCl
 
 	if (verifyModeString(requestArguments[2]) == false) 
 	{
-		std::cout << "MODE args are not right: [" << requestArguments[2] << "]" << std::endl;
+		// std::cout << "MODE args are not right: [" << requestArguments[2] << "]" << std::endl;
 		std::string notice = "NOTICE :mode: Syntax is wrong. Try again.\r\n";
 		safeSendMessage(currentClient.getSocket(), notice);
 		return ;

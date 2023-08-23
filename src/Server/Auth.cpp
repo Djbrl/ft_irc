@@ -192,10 +192,10 @@ void	IrcServer::dsy_cbarbit_AuthAndChannelMethodsPrototype(int clientFd, std::ve
 		return ;
 	
 	//HANDLE COMMANDS
-	for (size_t i = 0; i < requestArguments.size(); i++)
-	{
-		std::cout << "Handling command : [" << i << "] = [" << requestArguments[i] << "]" << std::endl;
-	}
+	// for (size_t i = 0; i < requestArguments.size(); i++)
+	// {
+	// 	std::cout << "Handling command : [" << i << "] = [" << requestArguments[i] << "]" << std::endl;
+	// }
 
 	if (requestArguments[0] == "PASS")
 		pass(requestArguments, *currentClient);

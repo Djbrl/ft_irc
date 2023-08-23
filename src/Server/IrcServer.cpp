@@ -10,20 +10,26 @@ void signalHandler(int signal)
 {
 	if (signal == SIGTERM)
 	{
-		std::cout << RED << "\n[IRC Server shutdown by SIGTERM Request, attempting graceful exit...]" << RESET << std::endl;
+		std::cout << RED << "\n[IRC Server shutdown by SIGTERM Request, closing connections...]" << RESET << std::endl;
 		for (size_t i = 0; i < g_clientSockets.size(); i++)
+		{
 			close(g_clientSockets[i]);
+			std::cout << Utils::getLocalTime() << "Connection to client [" << g_clientSockets[i] << "] closed." << std::endl;
+		}
 		requestShutdown = true;
 	}
 	else if (signal == SIGINT)
 	{
-		std::cout << YELLOW << "\n[IRC Server shutdown by SIGINT Request, attempting graceful exit...]" << RESET << std::endl;
+		std::cout << YELLOW << "\n[IRC Server shutdown by SIGINT Request, closing connections...]" << RESET << std::endl;
 		for (size_t i = 0; i < g_clientSockets.size(); i++)
+		{
 			close(g_clientSockets[i]);
+			std::cout << Utils::getLocalTime() << "Connection to client [" << g_clientSockets[i] << "] closed." << std::endl;
+		}
 		requestShutdown = true;
 	}
 	else if (signal == SIGPIPE)
-		std::cout << YELLOW << "\n[WARNING : SIGPIPE shutdown request, ignoring...]" << RESET << std::endl;
+		std::cout << "Warning: SIGPIPE request from system ignored." << std::endl;
 	return ;
 }
 
@@ -77,7 +83,7 @@ IrcServer::IrcServer(const unsigned int &portNumber, const std::string& password
 
 IrcServer::~IrcServer()
 {
-	std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << std::endl;
+	std::cout << TITLE << CLEARLINE << "[Server shutdown successful]" << RESET << "\n" << std::endl;
 }
 
 IrcServer::IrcServer(const IrcServer &cpy)
@@ -159,7 +165,7 @@ void	IrcServer::acceptClient()
 }
 void IrcServer::handleSuddenDisconnection(int clientFd)
 {
-		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] disconnected." << std::endl;
+		std::cout << Utils::getLocalTime() << "Client [" << clientFd << "] has left the server." << std::endl;
 		//NOTIFY USERS
 		std::map<std::string, Channel>::iterator	it = _Channels.begin();
 		User										*userToRemove = _ConnectedUsers.getUser(clientFd);		
@@ -222,8 +228,8 @@ void IrcServer::handleRequest(int clientFd)
     // parseQuery(clientFd, buffer);
     //AUTHENTICATION PROTOTYPE___________________________________________________________________________________
 	
-	std::cout << "buffer :" << buffer << std::endl;
-	std::cout << "user buffer :" << current_user->buffer << std::endl;
+	// std::cout << "buffer :" << buffer << std::endl;
+	// std::cout << "user buffer :" << current_user->buffer << std::endl;
 	
 	if (buffer_size_left == 0 && std::string(buffer).find("\r\n", 0) == std::string::npos)
 		return ;
@@ -232,7 +238,7 @@ void IrcServer::handleRequest(int clientFd)
 	std::vector<std::string> requests = splitStringByCRLF(std::string(ubuffer), ubuffer);
 	for (int i = 0; i < (int)requests.size(); i++)
 	{
-		std::cout << "command in queue [" << requests[i] << "]" << std::endl;
+		std::cout << Utils::getLocalTime() << "Received request [" << requests[i] << "] from " << "[" << clientFd << "]" << std::endl;
 		try
 		{
 			std::vector<std::string> args = parse_message(requests[i]);

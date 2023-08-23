@@ -128,8 +128,7 @@ void Channel::sendMessageToUsers(const std::string &messageToChannel, const std:
 			int bytes = send(_membersList[i].getSocket(), message.c_str(), message.size(), MSG_DONTWAIT); 
 			if (bytes <= 0)
 			{
-				std::cout << "Error : Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
-				continue ;
+				std::cout << "Notice : User [" << _membersList[i].getNickname() << "] cannot be reached and will be disconnected from the server." << std::endl;				continue ;
 			}
 			usleep(50000);
 		}
@@ -149,7 +148,7 @@ void Channel::sendNoticeToUsers(const std::string &noticeToChannel, const std::s
 			int bytes = send(_membersList[i].getSocket(), noticeToChannel.c_str(), noticeToChannel.size(), MSG_DONTWAIT);
 			if (bytes <= 0)
 			{
-				std::cout << "Error: Couldn't send data to client." << _membersList[i].getNickname() << ":" << _membersList[i].getSocket() << std::endl;
+				std::cout << "Notice : User [" << _membersList[i].getNickname() << "] cannot be reached and will be disconnected from the server." << std::endl;				continue ;
 				continue;
 			}
 			usleep(50000);
@@ -182,7 +181,7 @@ void Channel::showMessageHistory(User &target)
 	int bytesSent = send(target.getSocket(), message.c_str(), messageLen, MSG_DONTWAIT);        
 	if (bytesSent == -1 || bytesSent < (int)message.size())
 	{
-		std::cout << "Error: Couldn't send data to client." << target.getNickname() << ":" << target.getSocket() << std::endl;
+		std::cout << "Notice : User [" << target.getNickname() << "] cannot be reached and will be disconnected from the server." << std::endl;
 		return;
 	}
 }
